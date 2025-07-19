@@ -19,4 +19,8 @@ public class AuditLog {
     private String entity;
     private String changedBy;
     private LocalDateTime timestamp;
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
 } 

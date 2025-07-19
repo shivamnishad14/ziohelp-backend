@@ -22,4 +22,11 @@ public class Notification {
 
     @ManyToOne
     private User recipient;
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 } 

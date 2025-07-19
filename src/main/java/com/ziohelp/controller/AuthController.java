@@ -44,7 +44,9 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         String token = jwtTokenProvider.generateToken(authentication);
-        return ResponseEntity.ok(new LoginResponse(token));
+        LoginResponse response = new LoginResponse();
+        response.setToken(token);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register")
@@ -54,7 +56,11 @@ public class AuthController {
         }
 
         Role role = roleRepository.findByName("USER")
-                .orElseGet(() -> roleRepository.save(new Role("USER")));
+                .orElseGet(() -> {
+                    Role r = new Role();
+                    r.setName("USER");
+                    return roleRepository.save(r);
+                });
 
         User user = new User();
         user.setEmail(request.getEmail());

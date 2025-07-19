@@ -22,7 +22,8 @@ public class GuestTicketController {
     @GetMapping("/{id}/{email}")
     public ResponseEntity<?> getTicketStatus(@PathVariable Long id, @PathVariable String email) {
         Ticket ticket = ticketService.getTicketById(id);
-        return ticket.getEmail().equals(email)
+        String ticketEmail = ticket.getRaisedBy(); // getRaisedBy returns email directly
+        return email.equals(ticketEmail)
                 ? ResponseEntity.ok(ticket)
                 : ResponseEntity.badRequest().body("Ticket not found or email mismatch");
     }

@@ -14,5 +14,9 @@ public class Role {
     private Long id;
 
     @Column(unique = true)
-    private String name; // ADMIN, DEVELOPER, USER, GUEST, TENANT_ADMIN
+    private String name;
+
+    public String getName() { return name; }
+
+    public void setName(String name) { this.name = name; }
 } 
