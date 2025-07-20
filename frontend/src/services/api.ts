@@ -4,7 +4,8 @@ import { toast } from 'sonner';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  // baseURL: 'http://localhost:8080/api/v1',
+  baseURL: 'http://localhost:8080/api/',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -254,6 +255,15 @@ export const fileAPI = {
     api.delete(`/files/${filename}/delete`),
   list: () => 
     api.get('/files/list'),
+};
+
+// Organization API
+export const organizationAPI = {
+  getAll: (params?: { page?: number; size?: number; search?: string; sortBy?: string; sortDir?: string }) => 
+    api.get<{ content: any[]; page: number; size: number; totalElements: number; totalPages: number; last: boolean }>('/organizations', { 
+      params 
+    }),
+  // Add more methods as needed
 };
 
 export default api; 

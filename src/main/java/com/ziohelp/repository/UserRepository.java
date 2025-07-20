@@ -15,6 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     long countByCreatedAtAfter(LocalDateTime since);
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     List<User> findByOrganizationId(Long organizationId);
 
     @Query("SELECT u FROM User u WHERE (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
@@ -22,4 +23,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.organization.id = :orgId AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<User> findByOrganizationIdPaged(@Param("orgId") Long orgId, @Param("search") String search, Pageable pageable);
+
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'DEVELOPER' AND u.organization.id = :orgId")
+    List<User> findDevelopersByOrganizationId(@Param("orgId") Long orgId);
+    
+    // Add missing methods
+    List<User> findByRolesNameIn(List<String> roleNames);
+    long countByActiveTrue();
+    long countByActiveTrueAndCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 } 

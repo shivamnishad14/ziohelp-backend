@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { userAPI, ticketAPI } from '../../services/api';
+import { userAPI, ticketAPI } from '../../../services/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { onTicketEvent, connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
 
-const SuperAdminDashboard: React.FC = () => {
+const MasterAdminDashboard: React.FC = () => {
   const [pendingAdmins, setPendingAdmins] = useState<any[]>([]);  
   const [loadingAdmins, setLoadingAdmins] = useState(false);
   const [adminMessage, setAdminMessage] = useState('');
@@ -120,6 +121,17 @@ const SuperAdminDashboard: React.FC = () => {
   useEffect(() => {
     fetchPendingAdmins();
     fetchAnalytics();
+  }, []);
+
+  useEffect(() => {
+    connectWebSocket();
+    const handler = (event: any) => {
+      fetchAnalytics();
+    };
+    onTicketEvent(handler);
+    return () => {
+      disconnectWebSocket();
+    };
   }, []);
 
   // Export CSV utility
@@ -412,4 +424,4 @@ const SuperAdminDashboard: React.FC = () => {
   );
 };
 
-export default SuperAdminDashboard; 
+export default MasterAdminDashboard; 

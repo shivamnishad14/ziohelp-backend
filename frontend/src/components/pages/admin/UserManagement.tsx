@@ -82,7 +82,7 @@ const UserManagement: React.FC = () => {
     sortDir
   });
   const users = usersData?.content || [];
-  const totalPages = usersData?.totalPages || 1;
+  // const totalPages = usersData?.totalPages || 1;
   const totalElements = usersData?.totalElements || 0;
 
   const { data: searchResults } = useSearchUsers({
@@ -100,9 +100,9 @@ const UserManagement: React.FC = () => {
   const { data: userDetails } = useGetUser(showUserId as number, { enabled: !!showUserId });
 
   // For Super Admin role-based management tabs
-  const { data: engineerUsers } = useListUsers({ productId: selectedProduct, page: currentPage, size: pageSize, role: 'ENGINEER' });
-  const { data: adminUsers } = useListUsers({ productId: selectedProduct, page: currentPage, size: pageSize, role: 'ADMIN' });
-  const { data: normalUsers } = useListUsers({ productId: selectedProduct, page: currentPage, size: pageSize, role: 'USER' });
+  const { data: engineerUsers } = useListUsers({ page: currentPage, size: pageSize });
+  const { data: adminUsers } = useListUsers({ page: currentPage, size: pageSize });
+  const { data: normalUsers } = useListUsers({ page: currentPage, size: pageSize });
 
   // Mutations
   const createUser = useCreateUser();
@@ -135,6 +135,13 @@ const UserManagement: React.FC = () => {
   const totalPages = (searchQuery || roleFilter)
     ? (searchResults && 'totalPages' in searchResults ? searchResults.totalPages : 1)
     : (paginatedUsers && 'totalPages' in paginatedUsers ? paginatedUsers.totalPages : 1);
+
+  // Ensure displayUsers and totalPages are always arrays/numbers
+  const displayUsersArray = Array.isArray(displayUsers) ? displayUsers : [];
+  const totalPagesNum = typeof totalPages === 'number' ? totalPages : 1;
+
+  // Ensure userRole is defined and passed to all UsersTable usages
+  const userRole: UserRole = (currentUser?.role as UserRole) || '';
 
   // Handlers
   const handleCreateUser = async () => {
@@ -356,9 +363,10 @@ const UserManagement: React.FC = () => {
 
         <TabsContent value="all" className="space-y-4">
           <UsersTable 
-            users={displayUsers}
+            users={displayUsersArray}
             isLoading={isLoading}
             currentUser={currentUser}
+            userRole={userRole}
             onEdit={(user) => {
               setSelectedUser(user);
               setFormData({
@@ -387,6 +395,7 @@ const UserManagement: React.FC = () => {
             users={pendingAdmins}
             isLoading={false}
             currentUser={currentUser}
+            userRole={userRole}
             onEdit={() => {}}
             onRole={() => {}}
             onToggleActive={() => {}}
@@ -398,9 +407,10 @@ const UserManagement: React.FC = () => {
 
         <TabsContent value="active" className="space-y-4">
           <UsersTable 
-            users={displayUsers.filter((u: any) => u.isActive)}
+            users={displayUsersArray.filter((u: any) => u.isActive)}
             isLoading={false}
             currentUser={currentUser}
+            userRole={userRole}
             onEdit={() => {}}
             onRole={() => {}}
             onToggleActive={() => {}}
@@ -412,9 +422,10 @@ const UserManagement: React.FC = () => {
 
         <TabsContent value="inactive" className="space-y-4">
           <UsersTable 
-            users={displayUsers.filter((u: any) => !u.isActive)}
+            users={displayUsersArray.filter((u: any) => !u.isActive)}
             isLoading={false}
             currentUser={currentUser}
+            userRole={userRole}
             onEdit={() => {}}
             onRole={() => {}}
             onToggleActive={() => {}}
@@ -431,6 +442,7 @@ const UserManagement: React.FC = () => {
                 users={engineerUsers && 'content' in engineerUsers ? engineerUsers.content : engineerUsers || []}
                 isLoading={false}
                 currentUser={currentUser}
+                userRole={userRole}
                 onEdit={() => {}}
                 onRole={() => {}}
                 onToggleActive={() => {}}
@@ -444,6 +456,7 @@ const UserManagement: React.FC = () => {
                 users={adminUsers && 'content' in adminUsers ? adminUsers.content : adminUsers || []}
                 isLoading={false}
                 currentUser={currentUser}
+                userRole={userRole}
                 onEdit={() => {}}
                 onRole={() => {}}
                 onToggleActive={() => {}}
@@ -457,6 +470,7 @@ const UserManagement: React.FC = () => {
                 users={normalUsers && 'content' in normalUsers ? normalUsers.content : normalUsers || []}
                 isLoading={false}
                 currentUser={currentUser}
+                userRole={userRole}
                 onEdit={() => {}}
                 onRole={() => {}}
                 onToggleActive={() => {}}
@@ -470,7 +484,7 @@ const UserManagement: React.FC = () => {
       </Tabs>
 
       {/* Pagination */}
-      {displayUsers && (
+      {displayUsersArray && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>
@@ -479,7 +493,7 @@ const UserManagement: React.FC = () => {
                 className={currentPage === 0 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
               />
             </PaginationItem>
-            {Array.from({ length: totalPages }, (_, i) => (
+            {Array.from({ length: totalPagesNum }, (_, i) => (
               <PaginationItem key={i}>
                 <PaginationLink
                   onClick={() => setCurrentPage(i)}
@@ -491,8 +505,8 @@ const UserManagement: React.FC = () => {
             ))}
             <PaginationItem>
               <PaginationNext 
-                onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-                className={currentPage === totalPages - 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                onClick={() => setCurrentPage(Math.min(totalPagesNum - 1, currentPage + 1))}
+                className={currentPage === totalPagesNum - 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
               />
             </PaginationItem>
           </PaginationContent>
@@ -665,18 +679,19 @@ const UsersTable: React.FC<{
   users?: any;
   isLoading: boolean;
   currentUser: any;
+  userRole: UserRole;
   onEdit: (user: any) => void;
   onRole: (user: any) => void;
   onToggleActive: (userId: number) => void;
   onApproveAdmin: (userId: number) => void;
   onRejectAdmin: (userId: number) => void;
   onDelete: (userId: number) => void;
-}> = ({ users, isLoading, currentUser, onEdit, onRole, onToggleActive, onApproveAdmin, onRejectAdmin, onDelete }) => {
+}> = ({ users, isLoading, currentUser, userRole, onEdit, onRole, onToggleActive, onApproveAdmin, onRejectAdmin, onDelete }) => {
   // Permission helpers
-  const canEdit = (user: any) => currentUser.role === 'ADMIN';
-  const canDelete = (user: any) => currentUser.role === 'ADMIN';
-  const canApprove = (user: any) => currentUser.role === 'ADMIN';
-  const canChangeRole = (user: any) => currentUser.role === 'ADMIN';
+  const canEdit = (user: any) => userRole === 'ADMIN' || userRole === 'TENANT_ADMIN';
+  const canDelete = (user: any) => userRole === 'ADMIN' || userRole === 'TENANT_ADMIN';
+  const canApprove = (user: any) => userRole === 'ADMIN' || userRole === 'TENANT_ADMIN';
+  const canChangeRole = (user: any) => userRole === 'ADMIN' || userRole === 'TENANT_ADMIN';
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -761,6 +776,36 @@ const UsersTable: React.FC<{
         info.row.original.updatedAt
           ? new Date(info.row.original.updatedAt).toLocaleDateString()
           : '-',
+    },
+    {
+      accessorKey: 'actions',
+      header: 'Actions',
+      cell: (info: any) => (
+        <div className="flex items-center gap-2">
+          {(userRole === 'ADMIN' || userRole === 'TENANT_ADMIN') && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => onEdit(info.row.original)}>
+                Edit
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onRole(info.row.original)}>
+                Change Role
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onToggleActive(info.row.original.id)}>
+                Toggle Active
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => onDelete(info.row.original.id)}>
+                Delete
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onApproveAdmin(info.row.original.id)}>
+                Approve
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onRejectAdmin(info.row.original.id)}>
+                Reject
+              </Button>
+            </>
+          )}
+        </div>
+      ),
     },
   ];
 

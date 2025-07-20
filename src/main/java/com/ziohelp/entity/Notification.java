@@ -19,6 +19,7 @@ public class Notification {
     private String message;
     private boolean seen;
     private LocalDateTime timestamp;
+    private String recipientId; // Add this field for direct recipient ID
 
     @ManyToOne
     private User recipient;
@@ -29,4 +30,8 @@ public class Notification {
 
     public Organization getOrganization() { return organization; }
     public void setOrganization(Organization organization) { this.organization = organization; }
+    
+    // Add getter and setter for recipientId
+    public String getRecipientId() { return recipientId; }
+    public void setRecipientId(String recipientId) { this.recipientId = recipientId; }
 } 

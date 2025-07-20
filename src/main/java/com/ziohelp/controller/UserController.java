@@ -34,6 +34,7 @@ public class UserController {
     private final RoleRepository roleRepository;
 
     @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'TENANT_ADMIN', 'DEVELOPER')") // All authenticated users except guest
     public ResponseEntity<UserDto> getCurrentUser() {
         User user = authService.getAuthenticatedUser();
         UserDto dto = new UserDto();
@@ -44,6 +45,7 @@ public class UserController {
     }
 
     @PutMapping("/me")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'TENANT_ADMIN', 'DEVELOPER')") // All authenticated users except guest
     public ResponseEntity<UserDto> updateProfile(@RequestBody UserDto dto) {
         User user = authService.getAuthenticatedUser();
         user.setFullName(dto.getName());
@@ -56,6 +58,7 @@ public class UserController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')") // Only admin or tenant admin can create users
     public ResponseEntity<UserDto> createUser(@RequestBody UserDto dto, @RequestParam Long organizationId) {
         com.ziohelp.entity.Organization org = organizationService.getOrganizationById(organizationId);
         if (org == null) return ResponseEntity.badRequest().build();
@@ -72,6 +75,7 @@ public class UserController {
 
     @GetMapping("/by-org/{orgId}")
     @Operation(summary = "Get paginated, searchable, and sortable list of users by organization")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')") // Only admin or tenant admin can view users by org
     public ResponseEntity<PageResponse<UserDto>> getUsersByOrganization(
             @PathVariable Long orgId,
             @RequestParam(defaultValue = "") String search,

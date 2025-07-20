@@ -7,23 +7,26 @@ import ForgotPassword from './components/pages/ForgotPassword';
 import ResetPassword from './components/pages/ResetPassword';
 import Register from './components/pages/Register';
 import Unauthorized from './components/pages/Unauthorized';
-import HelpCenter from './components/pages/HelpCenter';
+import HelpCenter from './components/pages/guest/HelpCenter';
 import Landing from './components/pages/Landing';
-import TicketDashboard from './components/pages/TicketDashboard';
-import MyTickets from './components/pages/MyTickets';
-import SuperAdminDashboard from './components/pages/SuperAdminDashboard';
-import AdminDashboard from './components/pages/AdminDashboard';
-import AdminFAQKB from './components/pages/AdminFAQKB';
-import Dashboard from './components/pages/Dashboard';
-import FAQManagement from './components/pages/FAQManagement';
-import FileManagement from './components/pages/FileManagement';
+import TicketDashboard from './components/pages/developer/TicketDashboard';
+import MyTickets from './components/pages/user/MyTickets';
+import MasterAdminDashboard from './components/pages/admin/MasterAdminDashboard';
+import AdminDashboardMain from './components/pages/admin/AdminDashboardMain';
+import EngineerDashboard from './components/pages/developer/EngineerDashboard';
+import TenantDashboard from './components/pages/tenant/TenantDashboard';
+import Dashboard from './components/pages/user/Dashboard';
+import FAQManagement from './components/pages/admin/FAQManagement';
+import FileManagement from './components/pages/admin/FileManagement';
 import KnowledgeBase from './components/pages/KnowledgeBase';
-import ProductManagement from './components/pages/ProductManagement';
-import TicketManagement from './components/pages/TicketManagement';
-import UserManagement from './components/pages/UserManagement';
-import RoleManagement from './components/pages/RoleManagement';
-import Profile from './components/pages/Profile';
-import GuestTicketStatus from './components/pages/GuestTicketStatus';
+import ProductManagement from './components/pages/admin/ProductManagement';
+import TicketManagement from './components/pages/admin/TicketManagement';
+import UserManagement from './components/pages/admin/UserManagement';
+import RoleManagement from './components/pages/admin/RoleManagement';
+import Profile from './components/pages/user/Profile';
+import GuestTicketStatus from './components/pages/guest/GuestTicketStatus';
+import GuestRaiseTicket from './components/pages/guest/GuestRaiseTicket';
+import GuestTicketManagement from './components/pages/guest/GuestTicketManagement';
 
 export function HelpdeskRoutes() {
   return (
@@ -36,15 +39,48 @@ export function HelpdeskRoutes() {
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/help-center" element={<HelpCenter />} />
       <Route path="/guest-ticket-status" element={<GuestTicketStatus />} />
+      {/* User Dashboard */}
       <Route path="/dashboard" element={
-        <ProtectedRoute>
+        <ProtectedRoute roles={['USER']}>
           <Layout>
             <Dashboard />
           </Layout>
         </ProtectedRoute>
       } />
-      <Route path="/admin" element={<ProtectedRoute roles={['admin', 'product_admin', 'SUPER_ADMIN', 'super_admin']}><Layout><Outlet /></Layout></ProtectedRoute>}>
-        <Route path="dashboard" element={<AdminDashboard />} />
+      {/* Master Admin Dashboard */}
+      <Route path="/master-admin/dashboard" element={
+        <ProtectedRoute roles={['SUPER_ADMIN']}>
+          <Layout>
+            <MasterAdminDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      {/* Admin Dashboard */}
+      <Route path="/admin/dashboard" element={
+        <ProtectedRoute roles={['ADMIN']}>
+          <Layout>
+            <AdminDashboardMain />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      {/* Developer Dashboard */}
+      <Route path="/developer/dashboard" element={
+        <ProtectedRoute roles={['DEVELOPER']}>
+          <Layout>
+            <EngineerDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      {/* Tenant Admin Dashboard */}
+      <Route path="/tenant/dashboard" element={
+        <ProtectedRoute roles={['TENANT_ADMIN']}>
+          <Layout>
+            <TenantDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      {/* Admin Management Pages */}
+      <Route path="/admin" element={<ProtectedRoute roles={['ADMIN']}><Layout><Outlet /></Layout></ProtectedRoute>}>
         <Route path="faq-kb" element={<FAQManagement />} />
         <Route path="files" element={<FileManagement />} />
         <Route path="knowledge-base" element={<KnowledgeBase />} />
@@ -54,19 +90,27 @@ export function HelpdeskRoutes() {
         <Route path="roles" element={<RoleManagement />} />
         <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Coming soon...</p></div>} />
       </Route>
-      <Route path="/tickets" element={<ProtectedRoute roles={['admin', 'product_admin', 'agent']}><Layout><Outlet /></Layout></ProtectedRoute>}>
-        <Route path="dashboard" element={<TicketDashboard />} />
-        <Route path="my-tickets" element={<MyTickets />} />
+      {/* Developer Management Pages */}
+      <Route path="/developer" element={<ProtectedRoute roles={['DEVELOPER']}><Layout><Outlet /></Layout></ProtectedRoute>}>
+        <Route path="tickets" element={<TicketDashboard />} />
       </Route>
-      <Route path="/super-admin" element={<ProtectedRoute roles={['SUPER_ADMIN', 'super_admin']}><Layout><SuperAdminDashboard /></Layout></ProtectedRoute>} />
-      <Route path="/admin-faq-kb" element={
-        <ProtectedRoute roles={['admin', 'product_admin', 'SUPER_ADMIN', 'super_admin']}>
-          <Layout>
-            <FAQManagement />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      {/* Tenant Admin Management Pages */}
+      <Route path="/tenant" element={<ProtectedRoute roles={['TENANT_ADMIN']}><Layout><Outlet /></Layout></ProtectedRoute>}>
+        <Route path="tickets" element={<TicketManagement />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="faq" element={<FAQManagement />} />
+        <Route path="knowledge-base" element={<KnowledgeBase />} />
+        <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Coming soon...</p></div>} />
+      </Route>
+      {/* User Tickets */}
+      <Route path="/tickets/my-tickets" element={<ProtectedRoute roles={['USER']}><Layout><MyTickets /></Layout></ProtectedRoute>} />
+      {/* Profile */}
+      <Route path="/profile" element={<ProtectedRoute roles={['USER', 'ADMIN', 'DEVELOPER', 'TENANT_ADMIN']}><Profile /></ProtectedRoute>} />
+      {/* Guest routes (public) */}
+      <Route path="/guest/raise-ticket" element={<GuestRaiseTicket />} />
+      <Route path="/guest/ticket-status" element={<GuestTicketStatus />} />
+      <Route path="/faq" element={<FAQManagement />} />
+      {/* Fallback */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productAPI, userAPI, ticketAPI, knowledgeBaseAPI, aiAPI, fileAPI } from '../services/api';
+pimport { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { productAPI, userAPI, ticketAPI, knowledgeBaseAPI, aiAPI, fileAPI, organizationAPI } from '../services/api';
 import { Product, User, Ticket, KnowledgeBaseArticle } from '../types';
 
 // Product hooks
@@ -232,5 +232,13 @@ export const useDownloadFile = (filename: string) => {
     queryKey: ['file', filename],
     queryFn: () => fileAPI.download(filename),
     enabled: !!filename,
+  });
+}; 
+
+// Organization hooks
+export const useOrganizations = (params?: { page?: number; size?: number; search?: string; sortBy?: string; sortDir?: string }) => {
+  return useQuery({
+    queryKey: ['organizations', params],
+    queryFn: () => organizationAPI.getAll(params),
   });
 }; 

@@ -10,21 +10,22 @@ INSERT INTO organization (id, name, metadata) VALUES
 
 -- Users
 INSERT INTO "user" (id, full_name, email, password, approved, active, organization_id, created_at) VALUES
-(1, 'Alice', 'alice@acme.com', 'password', true, true, 1, NOW()),
-(2, 'Bob', 'bob@beta.com', 'password', true, true, 2, NOW()),
-(3, 'Charlie', 'charlie@gamma.com', 'password', true, true, 3, NOW()),
-(4, 'David', 'david@delta.com', 'password', true, true, 4, NOW()),
-(5, 'Eve', 'eve@epsilon.com', 'password', true, true, 5, NOW()),
-(6, 'Frank', 'frank@zeta.com', 'password', true, true, 6, NOW()),
-(7, 'Grace', 'grace@eta.com', 'password', true, true, 7, NOW()),
-(8, 'Heidi', 'heidi@theta.com', 'password', true, true, 8, NOW()),
-(9, 'Ivan', 'ivan@iota.com', 'password', true, true, 9, NOW()),
-(10, 'Judy', 'judy@kappa.com', 'password', true, true, 10, NOW()),
-(11, 'Mallory', 'mallory@lambda.com', 'password', true, true, 11, NOW()),
-(12, 'Niaj', 'niaj@mu.com', 'password', true, true, 12, NOW()),
-(13, 'Olivia', 'olivia@nu.com', 'password', true, true, 13, NOW()),
-(14, 'Peggy', 'peggy@xi.com', 'password', true, true, 14, NOW()),
-(15, 'Sybil', 'sybil@omicron.com', 'password', true, true, 15, NOW());
+(1, 'Alice', 'alice@acme.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW()),
+(2, 'Bob', 'bob@beta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 2, NOW()),
+(3, 'Charlie', 'charlie@gamma.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 3, NOW()),
+(4, 'David', 'david@delta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 4, NOW()),
+(5, 'Eve', 'eve@epsilon.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 5, NOW()),
+(6, 'Frank', 'frank@zeta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 6, NOW()),
+(7, 'Grace', 'grace@eta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 7, NOW()),
+(8, 'Heidi', 'heidi@theta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 8, NOW()),
+(9, 'Ivan', 'ivan@iota.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 9, NOW()),
+(10, 'Judy', 'judy@kappa.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 10, NOW()),
+(11, 'Mallory', 'mallory@lambda.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 11, NOW()),
+(12, 'Niaj', 'niaj@mu.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 12, NOW()),
+(13, 'Olivia', 'olivia@nu.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 13, NOW()),
+(14, 'Peggy', 'peggy@xi.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 14, NOW()),
+(15, 'Sybil', 'sybil@omicron.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 15, NOW()),
+(16, 'ZioHelp Admin', 'admin@ziohelp.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW());
 
 -- User Roles (Many-to-Many join table)
 INSERT INTO user_roles (user_id, role_id) VALUES
@@ -42,7 +43,8 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 (12, 2), -- Niaj is DEVELOPER
 (13, 5), -- Olivia is TENANT_ADMIN
 (14, 3), -- Peggy is USER
-(15, 3); -- Sybil is USER
+(15, 3), -- Sybil is USER
+(16, 1); -- ZioHelp Admin is ADMIN
 
 -- Tickets
 INSERT INTO ticket (id, title, description, status, priority, created_by, is_guest, created_at, updated_at, organization_id) VALUES

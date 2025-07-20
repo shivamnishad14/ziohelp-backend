@@ -56,17 +56,29 @@ A professional admin dashboard for managing products and support tickets in a he
 4. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-### Environment Variables
+## Environment Variables
 
 Create a `.env` file in the root directory. The following variables are required:
 
 ```env
-REACT_APP_API_URL=http://localhost:3001/api
-REACT_APP_WEBSOCKET_URL=ws://localhost:3001/ws
+REACT_APP_API_URL=http://localhost:8080/api/v1
+REACT_APP_WEBSOCKET_URL=ws://localhost:8080/ws
 REACT_APP_ENV=development
 ```
 
+**Other optional variables:**
+- `REACT_APP_ANALYTICS_KEY` (for analytics integration)
+- `REACT_APP_GEMINI_API_KEY` (for AI features)
+- `REACT_APP_FEATURE_FLAGS` (comma-separated list for feature toggles)
+
 > Adjust the URLs and variables as needed for your environment (development, staging, production).
+
+### Example `.env` for Production
+```env
+REACT_APP_API_URL=https://api.yourdomain.com/api/v1
+REACT_APP_WEBSOCKET_URL=wss://api.yourdomain.com/ws
+REACT_APP_ENV=production
+```
 
 ## Project Structure
 
@@ -112,10 +124,13 @@ The frontend is designed to work with a RESTful API. The API service layer is al
 
 ### Main Endpoints
 
-- **Products**: `/api/products`
-- **Users**: `/api/users`
-- **Tickets**: `/api/tickets`
-- **Authentication**: `/api/auth/*`
+- **Products**: `/api/v1/products`
+- **Users**: `/api/v1/users`
+- **Tickets**: `/api/v1/tickets`
+- **Authentication**: `/api/v1/auth/*`
+- **FAQ/Knowledge Base**: `/api/v1/knowledge-base/*`
+- **Notifications**: `/api/v1/notifications/*`
+- **Analytics**: `/api/v1/analytics/*`
 
 ## Testing & Linting
 
@@ -123,9 +138,17 @@ The frontend is designed to work with a RESTful API. The API service layer is al
   ```bash
   npm test
   ```
+  - For coverage report:
+    ```bash
+    npm test -- --coverage
+    ```
 - **Run linter:**
   ```bash
   npm run lint
+  ```
+- **Fix lint errors automatically:**
+  ```bash
+  npm run lint -- --fix
   ```
 - **Format code:**
   ```bash
@@ -196,17 +219,64 @@ npm run build
 
 The build artifacts will be stored in the `build/` directory.
 
-### Deploying
-- Upload the `build/` directory to your static hosting provider (Vercel, Netlify, AWS S3, etc.)
-- Set the correct environment variables for your production environment
-- Ensure the backend API is accessible from your deployed frontend
+### Deploying to Vercel/Netlify
+- Connect your GitHub repo and set environment variables in the dashboard.
+- Set build command: `npm run build`
+- Set output directory: `build`
+- Ensure your backend API is accessible from the deployed frontend (CORS, HTTPS, etc.)
+
+### Deploying with Docker
+- Create a `Dockerfile` (if not present):
+  ```dockerfile
+  FROM node:18-alpine as build
+  WORKDIR /app
+  COPY . .
+  RUN npm install && npm run build
+  FROM nginx:alpine
+  COPY --from=build /app/build /usr/share/nginx/html
+  EXPOSE 80
+  CMD ["nginx", "-g", "daemon off;"]
+  ```
+- Build and run:
+  ```bash
+  docker build -t ziohelp-frontend .
+  docker run -p 3000:80 ziohelp-frontend
+  ```
 
 ## Troubleshooting
 
-- **API connection errors:** Check `REACT_APP_API_URL` and backend server status
-- **WebSocket issues:** Ensure `REACT_APP_WEBSOCKET_URL` is correct and backend WebSocket is running
-- **CORS errors:** Make sure backend CORS settings allow requests from your frontend domain
-- **Build errors:** Ensure Node.js and npm versions match prerequisites
+- **API connection errors:**
+  - Check `REACT_APP_API_URL` and backend server status
+  - Ensure CORS is enabled on the backend for your frontend domain
+- **WebSocket issues:**
+  - Ensure `REACT_APP_WEBSOCKET_URL` is correct and backend WebSocket is running
+- **CORS errors:**
+  - Make sure backend CORS settings allow requests from your frontend domain
+- **Build errors:**
+  - Ensure Node.js and npm versions match prerequisites
+  - Delete `node_modules` and reinstall if you see dependency errors
+- **Login issues:**
+  - Ensure backend returns JWT and roles in the login response
+  - Check browser console for errors
+- **Role-based routing issues:**
+  - Make sure roles are stored in localStorage and used in route protection logic
+
+## FAQ
+
+**Q: How do I change the backend API URL?**
+A: Update `REACT_APP_API_URL` in your `.env` file and restart the frontend server.
+
+**Q: How do I add a new environment variable?**
+A: Add it to your `.env` file and reference it in your code with `process.env.REACT_APP_*`.
+
+**Q: How do I run tests and see coverage?**
+A: Run `npm test -- --coverage`.
+
+**Q: How do I debug login or authentication issues?**
+A: Check the network tab in your browser dev tools, ensure the backend is running, and verify the login response includes a JWT and roles.
+
+**Q: How do I deploy to production?**
+A: Build with `npm run build` and deploy the `build/` directory to your hosting provider. Set environment variables for production in your hosting dashboard.
 
 ## Contributing
 

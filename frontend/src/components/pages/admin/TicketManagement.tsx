@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ import {
 import { useListUsers } from '@/hooks/api/useUsers';
 import { useListProducts } from '@/hooks/api/useProducts';
 import { useAuth } from '@/hooks/api/useAuth';
+import { onTicketEvent, connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
 
 interface TicketFormData {
   subject: string;
@@ -48,8 +49,11 @@ interface TicketFormData {
   productId: number;
 }
 
+type UserRole = 'ADMIN' | 'TENANT_ADMIN' | 'DEVELOPER' | 'USER' | 'GUEST' | '';
+
 const TicketManagement: React.FC = () => {
   const { user } = useAuth();
+  const userRole: UserRole = (user?.role as UserRole) || '';
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -81,7 +85,7 @@ const TicketManagement: React.FC = () => {
   const tickets = ticketsData?.content || [];
   const totalPages = ticketsData?.totalPages || 1;
   const totalElements = ticketsData?.totalElements || 0;
-  const { data: users } = useListUsers({ productId: 1, page: 1, size: 100 }); // Assuming productId is always 1
+  const { data: users } = useListUsers({ page: 1, size: 100 }); // Remove productId
   const userList = Array.isArray(users) ? users : users?.content || [];
 
   const { data: searchResults } = useSearchTickets({
@@ -131,6 +135,28 @@ const TicketManagement: React.FC = () => {
   const [commentData, setCommentData] = useState({
     content: ''
   });
+
+  const [faqSuggestions, setFaqSuggestions] = useState<string[]>([]);
+  const [faqLoading, setFaqLoading] = useState(false);
+
+  // Fetch FAQ suggestions as user types
+  useEffect(() => {
+    const query = formData.subject || formData.description;
+    if (!query || query.length < 3) {
+      setFaqSuggestions([]);
+      return;
+    }
+    setFaqLoading(true);
+    fetch('/api/ai/faq-suggest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    })
+      .then(res => res.json())
+      .then(data => setFaqSuggestions(data.suggestions || []))
+      .catch(() => setFaqSuggestions([]))
+      .finally(() => setFaqLoading(false));
+  }, [formData.subject, formData.description]);
 
   // Handlers
   const handleCreateTicket = async () => {
@@ -263,6 +289,19 @@ const TicketManagement: React.FC = () => {
 
   const displayTickets = searchQuery || statusFilter ? searchResults : tickets;
 
+  useEffect(() => {
+    connectWebSocket();
+    const handler = (event: any) => {
+      // Optionally filter by event type, e.g., NEW, RESOLVED, ASSIGNED
+      queryClient.invalidateQueries(['tickets']);
+      toast(`Ticket ${event.eventType?.toLowerCase()}: ${event.title}`);
+    };
+    onTicketEvent(handler);
+    return () => {
+      disconnectWebSocket();
+    };
+  }, [queryClient, toast]);
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -273,9 +312,11 @@ const TicketManagement: React.FC = () => {
             Manage and track support tickets
           </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          Create New Ticket
-        </Button>
+        {userRole === 'USER' || userRole === 'ADMIN' || userRole === 'TENANT_ADMIN' ? (
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            Create New Ticket
+          </Button>
+        ) : null}
       </div>
 
       <Separator />
@@ -352,6 +393,8 @@ const TicketManagement: React.FC = () => {
           <TicketsTable 
             tickets={displayTickets}
             isLoading={isLoading}
+            userRole={userRole}
+            totalElements={totalElements}
             onEdit={(ticket) => {
               setSelectedTicket(ticket);
               setFormData({
@@ -383,6 +426,8 @@ const TicketManagement: React.FC = () => {
           <TicketsTable 
             tickets={pendingApprovals}
             isLoading={false}
+            userRole={userRole}
+            totalElements={0} // No total elements for pending approvals
             onEdit={() => {}}
             onAssign={() => {}}
             onResolve={() => {}}
@@ -395,11 +440,22 @@ const TicketManagement: React.FC = () => {
           <TicketsTable 
             tickets={[]} // TODO: Implement assigned tickets
             isLoading={false}
+            userRole={userRole}
+            totalElements={0} // No total elements for assigned tickets
             onEdit={() => {}}
-            onAssign={() => {}}
-            onResolve={() => {}}
-            onComment={() => {}}
-            onDelete={() => {}}
+            onAssign={(ticket) => {
+              setSelectedTicket(ticket);
+              setIsAssignDialogOpen(true);
+            }}
+            onResolve={(ticket) => {
+              setSelectedTicket(ticket);
+              setIsResolveDialogOpen(true);
+            }}
+            onComment={(ticket) => {
+              setSelectedTicket(ticket);
+              setIsCommentDialogOpen(true);
+            }}
+            onDelete={handleDeleteTicket}
           />
         </TabsContent>
 
@@ -407,6 +463,8 @@ const TicketManagement: React.FC = () => {
           <TicketsTable 
             tickets={[]} // TODO: Implement my tickets
             isLoading={false}
+            userRole={userRole}
+            totalElements={0} // No total elements for my tickets
             onEdit={() => {}}
             onAssign={() => {}}
             onResolve={() => {}}
@@ -464,9 +522,11 @@ const TicketManagement: React.FC = () => {
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateTicket} disabled={createTicket.isPending}>
-              {createTicket.isPending ? 'Creating...' : 'Create Ticket'}
-            </Button>
+            {userRole === 'USER' || userRole === 'ADMIN' || userRole === 'TENANT_ADMIN' ? (
+              <Button onClick={handleCreateTicket} disabled={createTicket.isPending}>
+                {createTicket.isPending ? 'Creating...' : 'Create Ticket'}
+              </Button>
+            ) : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -622,6 +682,20 @@ const TicketForm: React.FC<{
         />
       </div>
       
+      {faqLoading && <div className="text-xs text-gray-400">Loading FAQ suggestions...</div>}
+      {faqSuggestions.length > 0 && (
+        <div className="mt-2 bg-gray-50 border rounded p-2">
+          <div className="text-xs text-gray-600 mb-1">FAQ Suggestions:</div>
+          <ul className="space-y-1">
+            {faqSuggestions.map((s, i) => (
+              <li key={i}>
+                <button type="button" className="text-blue-600 hover:underline text-left" onClick={() => setFormData(fd => ({ ...fd, description: s }))}>{s}</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Priority</Label>
@@ -678,12 +752,14 @@ const TicketForm: React.FC<{
 const TicketsTable: React.FC<{
   tickets?: any;
   isLoading: boolean;
+  userRole: UserRole;
+  totalElements: number;
   onEdit: (ticket: any) => void;
   onAssign: (ticket: any) => void;
   onResolve: (ticket: any) => void;
   onComment: (ticket: any) => void;
   onDelete: (ticketId: number) => void;
-}> = ({ tickets, isLoading, onEdit, onAssign, onResolve, onComment, onDelete }) => {
+}> = ({ tickets, isLoading, userRole, totalElements, onEdit, onAssign, onResolve, onComment, onDelete }) => {
   if (isLoading) {
     return (
       <Card>
@@ -779,17 +855,21 @@ const TicketsTable: React.FC<{
                     <Button size="sm" variant="outline" onClick={() => onEdit(ticket)}>
                       Edit
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => onAssign(ticket)}>
-                      Assign
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => onResolve(ticket)}>
-                      Resolve
-                    </Button>
+                    {(userRole === 'ADMIN' || userRole === 'TENANT_ADMIN' || (userRole === 'DEVELOPER' && ticket.assignedTo)) && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => onAssign(ticket)}>
+                          Assign
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => onResolve(ticket)}>
+                          Resolve
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => onDelete(ticket.id)}>
+                          Delete
+                        </Button>
+                      </>
+                    )}
                     <Button size="sm" variant="outline" onClick={() => onComment(ticket)}>
                       Comment
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => onDelete(ticket.id)}>
-                      Delete
                     </Button>
                   </div>
                 </TableCell>

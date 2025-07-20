@@ -15,6 +15,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     long countByCreatedAtAfter(LocalDateTime since);
     long countByStatusAndCreatedAtAfter(String status, LocalDateTime since);
     long countByStatus(String status);
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    List<Ticket> findAllByCreatedAtAfter(LocalDateTime since);
 
     List<Ticket> findAllByOrderByCreatedAtDesc();
     List<Ticket> findByCreatedByOrderByCreatedAtDesc(String createdBy);
@@ -29,4 +31,16 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             "(:toDate IS NULL OR t.createdAt <= :toDate) AND " +
             "(:search IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.description) LIKE LOWER(CONCAT('%', :search, '%')))" )
     Page<Ticket> findAllFilteredPaged(@Param("status") String status, @Param("fromDate") LocalDateTime fromDate, @Param("toDate") LocalDateTime toDate, @Param("search") String search, Pageable pageable);
+
+    List<Ticket> findByAssignedTo(User assignedTo);
+    List<Ticket> findByAssignedToId(Long assignedToId);
+    List<Ticket> findByOrganizationIdAndAssignedToId(Long organizationId, Long assignedToId);
+    
+    // Add missing methods
+    long countByStatusAndCreatedAtBetween(String status, LocalDateTime start, LocalDateTime end);
+    List<Ticket> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    long countByStatusAndUpdatedAtBetween(String status, LocalDateTime start, LocalDateTime end);
+    long countByStatusAndUpdatedAtAfter(String status, LocalDateTime after);
+    List<Ticket> findByStatusInAndCreatedAtBetween(List<String> statuses, LocalDateTime start, LocalDateTime end);
+    long countByOrganizationIdAndStatusAndCreatedAtBetween(Long organizationId, String status, LocalDateTime start, LocalDateTime end);
 } 

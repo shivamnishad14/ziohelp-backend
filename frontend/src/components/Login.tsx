@@ -16,15 +16,31 @@ const Login: React.FC = () => {
 
     try {
       const response = await authAPI.login(email, password);
-      
-      if (response.data.success) {
-        // Redirect based on role
-        const role = response.data.data.role;
-        if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
-          navigate('/');
+      const data = response.data;
+      if (data && data.token) {
+        // Store JWT, roles, and user info
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userRoles', JSON.stringify(data.roles));
+        localStorage.setItem('userInfo', JSON.stringify({
+          userId: data.userId,
+          email: data.email,
+          fullName: data.fullName
+        }));
+        // Redirect based on highest privilege role
+        const roles = data.roles || [];
+        if (roles.includes('ADMIN')) {
+          navigate('/admin/dashboard');
+        } else if (roles.includes('TENANT_ADMIN')) {
+          navigate('/tenant/dashboard');
+        } else if (roles.includes('DEVELOPER')) {
+          navigate('/developer/dashboard');
+        } else if (roles.includes('USER')) {
+          navigate('/dashboard');
         } else {
-          navigate('/tickets');
+          navigate('/');
         }
+      } else {
+        setError('Login failed. Please try again.');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');

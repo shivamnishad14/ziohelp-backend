@@ -59,4 +59,15 @@ public class User {
     public void setOrganization(Organization organization) { this.organization = organization; }
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
+    
+    // Add missing methods
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public Long getOrganizationId() { 
+        return organization != null ? organization.getId() : null; 
+    }
 } 

@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/organizations")
@@ -24,6 +25,7 @@ public class OrganizationController {
 
     @GetMapping
     @Operation(summary = "Get paginated, searchable, and sortable list of organizations")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')") // All authenticated users can view orgs
     public ResponseEntity<PageResponse<Organization>> getAllOrganizations(
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
@@ -46,18 +48,22 @@ public class OrganizationController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable Long id) {
+        // TODO: For TENANT_ADMIN, only allow if org matches their tenant
         Organization org = organizationService.getOrganizationById(id);
         if (org == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(org);
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')") // Only admin can create orgs
     public ResponseEntity<Organization> createOrganization(@RequestBody Organization org) {
         return ResponseEntity.ok(organizationService.createOrganization(org));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Only admin can delete orgs
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long id) {
         organizationService.deleteOrganization(id);
         return ResponseEntity.noContent().build();

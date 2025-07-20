@@ -14,8 +14,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
+import com.ziohelp.service.AccessControlService;
+import com.ziohelp.service.AuthService;
+import com.ziohelp.entity.User;
 
 @RestController
 @RequestMapping("/api/faq")
@@ -25,9 +29,14 @@ public class FaqController {
     private FaqRepository faqRepository;
     @Autowired
     private OrganizationService organizationService;
+    @Autowired
+    private AccessControlService accessControlService;
+    @Autowired
+    private AuthService authService;
 
     @GetMapping
     @Operation(summary = "Get paginated, searchable, and sortable list of FAQs")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')") // All authenticated users can view FAQs
     public ResponseEntity<PageResponse<Faq>> getAllFaqs(
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
@@ -51,6 +60,7 @@ public class FaqController {
 
     @GetMapping("/by-org/{orgId}")
     @Operation(summary = "Get paginated, searchable, and sortable list of FAQs by organization")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
     public ResponseEntity<PageResponse<Faq>> getFaqsByOrganization(
             @PathVariable Long orgId,
             @RequestParam(defaultValue = "") String search,
@@ -74,7 +84,10 @@ public class FaqController {
     }
 
     @PostMapping("/by-org/{orgId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')") // Only admin or tenant admin can create FAQs
     public ResponseEntity<Faq> createFaqForOrganization(@RequestBody Faq faq, @PathVariable Long orgId) {
+        User currentUser = authService.getAuthenticatedUser();
+        accessControlService.validateContentCreation(currentUser, orgId);
         Organization org = organizationService.getOrganizationById(orgId);
         if (org == null) return ResponseEntity.badRequest().build();
         faq.setOrganization(org);

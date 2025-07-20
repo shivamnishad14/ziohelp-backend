@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { Badge } from '../../components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Textarea } from '../../../components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/dialog';
+import { Badge } from '../../../components/ui/badge';
 import { Search, Plus, FileText, HelpCircle, Send, CheckCircle, Eye } from 'lucide-react';
-import FAQArticleDetail from '../../components/FAQArticleDetail';
+import FAQArticleDetail from '../../../components/FAQArticleDetail';
 import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
@@ -61,6 +61,8 @@ const HelpCenter: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailType, setDetailType] = useState<'faq' | 'article'>('faq');
   const [guestToken, setGuestToken] = useState<string>('');
+  const [faqSuggestions, setFaqSuggestions] = useState<string[]>([]);
+  const [faqLoading, setFaqLoading] = useState(false);
 
   const categories = ['all', 'General', 'Technical', 'Billing', 'Account', 'Product'];
 
@@ -68,6 +70,25 @@ const HelpCenter: React.FC = () => {
     fetchFAQs();
     fetchArticles();
   }, [productId]);
+
+  // Fetch FAQ suggestions as user types in the ticket form
+  useEffect(() => {
+    const query = ticketForm.title || ticketForm.description;
+    if (!showTicketForm || !query || query.length < 3) {
+      setFaqSuggestions([]);
+      return;
+    }
+    setFaqLoading(true);
+    fetch('/api/ai/faq-suggest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    })
+      .then(res => res.json())
+      .then(data => setFaqSuggestions(data.suggestions || []))
+      .catch(() => setFaqSuggestions([]))
+      .finally(() => setFaqLoading(false));
+  }, [ticketForm.title, ticketForm.description, showTicketForm]);
 
   const fetchFAQs = async () => {
     try {
@@ -270,6 +291,20 @@ const HelpCenter: React.FC = () => {
                       placeholder="Brief description of your issue"
                     />
                   </div>
+
+                  {faqLoading && <div className="text-xs text-gray-400">Loading FAQ suggestions...</div>}
+                  {faqSuggestions.length > 0 && (
+                    <div className="mt-2 bg-gray-50 border rounded p-2">
+                      <div className="text-xs text-gray-600 mb-1">FAQ Suggestions:</div>
+                      <ul className="space-y-1">
+                        {faqSuggestions.map((s, i) => (
+                          <li key={i}>
+                            <button type="button" className="text-blue-600 hover:underline text-left" onClick={() => setTicketForm(fd => ({ ...fd, description: s }))}>{s}</button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>

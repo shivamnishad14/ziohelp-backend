@@ -53,6 +53,9 @@ const FAQManagement: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
+  type UserRole = 'ADMIN' | 'TENANT_ADMIN' | 'DEVELOPER' | 'USER' | 'GUEST' | '';
+  const userRole: UserRole = (user?.role as UserRole) || '';
+
   // Queries
   const { data: faqs, isLoading } = useListFAQs();
 
@@ -153,9 +156,11 @@ const FAQManagement: React.FC = () => {
             Manage frequently asked questions and answers
           </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          Create New FAQ
-        </Button>
+        {(userRole === 'ADMIN' || userRole === 'TENANT_ADMIN') && (
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            Create New FAQ
+          </Button>
+        )}
       </div>
 
       <Separator />
@@ -234,6 +239,7 @@ const FAQManagement: React.FC = () => {
           <FAQsTable 
             faqs={displayFAQs}
             isLoading={isLoading}
+            userRole={userRole}
             onView={(faq) => {
               setSelectedFAQ(faq);
               setIsViewDialogOpen(true);
@@ -257,6 +263,7 @@ const FAQManagement: React.FC = () => {
           <FAQsTable 
             faqs={productFAQs}
             isLoading={false}
+            userRole={userRole}
             onView={() => {}}
             onEdit={() => {}}
             onDelete={() => {}}
@@ -271,6 +278,7 @@ const FAQManagement: React.FC = () => {
           <FAQsTable 
             faqs={(displayFAQs?.content ?? displayFAQs ?? []).filter((f: any) => f.isActive)}
             isLoading={false}
+            userRole={userRole}
             onView={() => {}}
             onEdit={() => {}}
             onDelete={() => {}}
@@ -479,10 +487,11 @@ const FAQForm: React.FC<{
 const FAQsTable: React.FC<{
   faqs?: any;
   isLoading: boolean;
+  userRole: UserRole;
   onView: (faq: any) => void;
   onEdit: (faq: any) => void;
   onDelete: (faqId: number) => void;
-}> = ({ faqs, isLoading, onView, onEdit, onDelete }) => {
+}> = ({ faqs, isLoading, userRole, onView, onEdit, onDelete }) => {
   if (isLoading) {
     return (
       <Card>
@@ -547,30 +556,34 @@ const FAQsTable: React.FC<{
                     <Button size="sm" variant="outline" onClick={() => onView(faq)}>
                       View
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => onEdit(faq)}>
-                      Edit
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="destructive">
-                          Delete
+                    {(userRole === 'ADMIN' || userRole === 'TENANT_ADMIN') && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => onEdit(faq)}>
+                          Edit
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the FAQ.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => onDelete(faq.id)}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive">
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the FAQ.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDelete(faq.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

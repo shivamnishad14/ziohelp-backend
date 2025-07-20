@@ -17,7 +17,7 @@ import {
 import { cn } from '../../lib/utils';
 import { authAPI } from '../../services/api';
 
-type Role = 'SUPER_ADMIN' | 'admin' | 'product_admin' | 'agent' | 'USER';
+type Role = 'ADMIN' | 'DEVELOPER' | 'USER' | 'GUEST' | 'TENANT_ADMIN';
 interface NavigationItem {
   name: string;
   href: string;
@@ -25,18 +25,7 @@ interface NavigationItem {
 }
 
 const navigationByRole: Record<Role, NavigationItem[]> = {
-  SUPER_ADMIN: [
-    { name: 'Super Admin Dashboard', href: '/super-admin', icon: LayoutDashboard },
-    { name: 'FAQ Management', href: '/admin/faq-kb', icon: BookOpen },
-    { name: 'File Management', href: '/admin/files', icon: FileText },
-    { name: 'Knowledge Base', href: '/admin/knowledge-base', icon: BookOpen },
-    { name: 'Product Management', href: '/admin/products', icon: Package },
-    { name: 'Ticket Management', href: '/admin/tickets', icon: ClipboardList },
-    { name: 'User Management', href: '/admin/users', icon: Users },
-    { name: 'Role Management', href: '/admin/roles', icon: Shield },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
-  ],
-  admin: [
+  ADMIN: [
     { name: 'Admin Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'FAQ Management', href: '/admin/faq-kb', icon: BookOpen },
     { name: 'File Management', href: '/admin/files', icon: FileText },
@@ -47,37 +36,44 @@ const navigationByRole: Record<Role, NavigationItem[]> = {
     { name: 'Role Management', href: '/admin/roles', icon: Shield },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ],
-  product_admin: [
-    { name: 'Admin Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'FAQ Management', href: '/admin/faq-kb', icon: BookOpen },
-    { name: 'File Management', href: '/admin/files', icon: FileText },
-    { name: 'Knowledge Base', href: '/admin/knowledge-base', icon: BookOpen },
-    { name: 'Product Management', href: '/admin/products', icon: Package },
-    { name: 'Ticket Management', href: '/admin/tickets', icon: ClipboardList },
-    { name: 'User Management', href: '/admin/users', icon: Users },
-    { name: 'Role Management', href: '/admin/roles', icon: Shield },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
-  ],
-  agent: [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'My Tickets', href: '/tickets/my-tickets', icon: UserCheck },
+  DEVELOPER: [
+    { name: 'Developer Dashboard', href: '/developer/dashboard', icon: LayoutDashboard },
+    { name: 'Assigned Tickets', href: '/developer/tickets', icon: ClipboardList },
     { name: 'Knowledge Base', href: '/knowledge-base', icon: BookOpen },
     { name: 'Help Center', href: '/help-center', icon: Ticket },
   ],
   USER: [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'User Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Tickets', href: '/tickets/my-tickets', icon: ClipboardList },
     { name: 'Help Center', href: '/help-center', icon: Ticket },
-  ]
+    { name: 'Knowledge Base', href: '/knowledge-base', icon: BookOpen },
+  ],
+  GUEST: [
+    { name: 'Raise Ticket', href: '/guest/raise-ticket', icon: Ticket },
+    { name: 'Track Ticket', href: '/guest/ticket-status', icon: ClipboardList },
+    { name: 'FAQ', href: '/faq', icon: BookOpen },
+  ],
+  TENANT_ADMIN: [
+    { name: 'Tenant Admin Dashboard', href: '/tenant/dashboard', icon: LayoutDashboard },
+    { name: 'Tenant Tickets', href: '/tenant/tickets', icon: ClipboardList },
+    { name: 'Tenant Users', href: '/tenant/users', icon: Users },
+    { name: 'Tenant FAQ', href: '/tenant/faq', icon: BookOpen },
+    { name: 'Knowledge Base', href: '/tenant/knowledge-base', icon: BookOpen },
+    { name: 'Settings', href: '/tenant/settings', icon: Settings },
+  ],
 };
 
 function getNavigation(): NavigationItem[] {
   const userRole = (localStorage.getItem('userRole') as Role) || 'USER';
   const nav = navigationByRole[userRole] || navigationByRole['USER'];
-  // Add Profile link for all roles
-  return [
-    ...nav,
-    { name: 'Profile', href: '/profile', icon: UserCheck },
-  ];
+  // Add Profile link for all roles except GUEST
+  if (userRole !== 'GUEST') {
+    return [
+      ...nav,
+      { name: 'Profile', href: '/profile', icon: UserCheck },
+    ];
+  }
+  return nav;
 }
 
 interface SidebarProps {

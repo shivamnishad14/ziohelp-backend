@@ -30,6 +30,10 @@ public class Ticket {
     @JoinColumn(name = "organization_id")
     private Organization organization;
 
+    @ManyToOne
+    @JoinColumn(name = "assigned_to_id")
+    private User assignedTo;
+
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL)
     private List<Comment> comments;
 
@@ -52,4 +56,30 @@ public class Ticket {
     public boolean isGuest() { return isGuest; }
     public void setGuest(boolean guest) { isGuest = guest; }
     public String getRaisedBy() { return createdBy; }
+    public User getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(User assignedTo) { this.assignedTo = assignedTo; }
+    
+    // Add missing methods
+    public Long getOrganizationId() { 
+        return organization != null ? organization.getId() : null; 
+    }
+    
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    
+    public List<Comment> getComments() { return comments; }
+    public void setComments(List<Comment> comments) { this.comments = comments; }
+    
+    public Set<Attachment> getAttachments() { return attachments; }
+    public void setAttachments(Set<Attachment> attachments) { this.attachments = attachments; }
+    
+    public Set<TicketHistory> getHistory() { return history; }
+    public void setHistory(Set<TicketHistory> history) { this.history = history; }
 } 
