@@ -18,6 +18,7 @@ com\ziohelp\controller\UserController.class
 com\ziohelp\service\KnowledgeBaseService.class
 com\ziohelp\service\ProductService.class
 com\ziohelp\dto\LoginRequest.class
+HashTest.class
 com\ziohelp\dto\UserDto.class
 com\ziohelp\controller\RoleController.class
 com\ziohelp\entity\Role$RoleBuilder.class
@@ -72,6 +73,7 @@ com\ziohelp\repository\CommentRepository.class
 com\ziohelp\service\PdfExportService.class
 com\ziohelp\repository\KnowledgeBaseArticleRepository.class
 com\ziohelp\security\AuthEntryPointJwt.class
+com\ziohelp\security\TestPassword.class
 com\ziohelp\repository\TicketRepository.class
 com\ziohelp\entity\KnowledgeBaseArticle.class
 com\ziohelp\ZioHelpApplication.class

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
-import Login from './components/pages/Login';
+import {Login} from './components/pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import ForgotPassword from './components/pages/ForgotPassword';
 import ResetPassword from './components/pages/ResetPassword';

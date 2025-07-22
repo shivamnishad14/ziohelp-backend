@@ -1,5 +1,7 @@
 package com.ziohelp.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.ziohelp.dto.LoginRequest;
 import com.ziohelp.dto.LoginResponse;
 import com.ziohelp.dto.RegisterRequest;
@@ -15,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -23,7 +26,6 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import com.ziohelp.service.EmailService;
@@ -57,6 +59,8 @@ public class AuthController {
     @Autowired
     private AuditLogService auditLogService;
 
+    private final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     @Operation(
         summary = "User login",
         description = "Authenticate user and return JWT token and user details."
@@ -67,48 +71,68 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @org.springframework.web.bind.annotation.RequestBody LoginRequest request) {
         try {
-            System.out.println("Received login request: " + request);
-            System.out.println("Email: " + request.getEmail());
-            System.out.println("Password: " + request.getPassword());
+            logger.info("Login attempt for identifier: {}", request.getLoginIdentifier());
 
-            System.out.println("Looking for email: '" + request.getEmail() + "'");
-            String loginInput = request.getEmail() != null && !request.getEmail().isEmpty() ? request.getEmail().trim() :
-                   request.getUsername() != null && !request.getUsername().isEmpty() ? request.getUsername().trim() : null;
+            // Input validation
+            if (!request.hasEmailOrUsername()) {
+                logger.warn("Login attempt failed: No email or username provided");
+                return ResponseEntity.badRequest()
+                    .body(new ApiError(1001, "Please provide either email or username"));
+            }
+
+            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+                logger.warn("Login attempt failed: Empty password");
+                return ResponseEntity.badRequest()
+                    .body(new ApiError(1002, "Password cannot be empty"));
+            }
+
+            // Find user by email or username
+            String loginIdentifier = request.getLoginIdentifier();
             User user = null;
-            if (loginInput != null) {
-                user = userRepository.findByEmailIgnoreCase(loginInput).orElse(null);
-                if (user == null) {
-                    user = userRepository.findByUsernameIgnoreCase(loginInput).orElse(null);
-                }
+
+            // First try email
+            if (request.getEmail() != null) {
+                user = userRepository.findByEmailIgnoreCase(request.getEmail().trim()).orElse(null);
             }
-            System.out.println("User found: " + (user != null ? user.getEmail() : "null"));
-            List<User> allUsers = userRepository.findAll();
-            for (User u : allUsers) {
-                System.out.println("DB email: '" + u.getEmail() + "'");
+
+            // If not found by email and username is provided, try username
+            if (user == null && request.getUsername() != null) {
+                user = userRepository.findByUsernameIgnoreCase(request.getUsername().trim()).orElse(null);
             }
-            System.out.println("User found: " + (user != null ? user.getEmail() : "null"));
 
             if (user == null) {
-                auditLogService.logActivity("LOGIN_FAIL", "Invalid email", request.getEmail());
-                System.out.println("No user found for email: " + request.getEmail());
-                return ResponseEntity.status(400).body(new ApiError(1001, "Invalid Email"));
+                String identifier = request.getEmail() != null ? "email" : "username";
+                auditLogService.logActivity("LOGIN_FAIL", "Invalid " + identifier, loginIdentifier);
+                return ResponseEntity.status(400)
+                    .body(new ApiError(1001, "Invalid " + identifier + ". Please check and try again."));
             }
-            if (!user.isApproved() || !user.isActive()) {
-                auditLogService.logActivity("LOGIN_FAIL", "User not approved or inactive", request.getEmail());
-                System.out.println("User not approved or inactive: " + request.getEmail());
-                return ResponseEntity.status(400).body(new ApiError(1003, "User not approved or inactive"));
+
+            // Check account status
+            if (!user.isActive()) {
+                auditLogService.logActivity("LOGIN_FAIL", "Account inactive", user.getEmail());
+                return ResponseEntity.status(400)
+                    .body(new ApiError(1003, "Your account is currently inactive. Please contact support."));
             }
+
+            if (!user.isApproved()) {
+                auditLogService.logActivity("LOGIN_FAIL", "Account pending approval", user.getEmail());
+                return ResponseEntity.status(400)
+                    .body(new ApiError(1004, "Your account is pending approval. Please wait for admin approval."));
+            }
+
             if (!user.isEmailVerified()) {
-                auditLogService.logActivity("LOGIN_FAIL", "Email not verified", request.getEmail());
-                System.out.println("User email not verified: " + request.getEmail());
-                return ResponseEntity.status(400).body(new ApiError(1004, "Email not verified. Please check your email for the verification link."));
+                auditLogService.logActivity("LOGIN_FAIL", "Email not verified", user.getEmail());
+                return ResponseEntity.status(400)
+                    .body(new ApiError(1005, "Please verify your email address. Check your inbox for the verification link."));
             }
+
+            // Validate password
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                auditLogService.logActivity("LOGIN_FAIL", "Invalid password", request.getEmail());
-                System.out.println("Invalid password for email: " + request.getEmail());
-                return ResponseEntity.status(400).body(new ApiError(1002, "Invalid Password"));
+                auditLogService.logActivity("LOGIN_FAIL", "Invalid password", user.getEmail());
+                return ResponseEntity.status(400)
+                    .body(new ApiError(1002, "Invalid password. Please try again."));
             }
             System.out.println("Login attempt for email: " + request.getEmail());
             // Authenticate user

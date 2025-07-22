@@ -1,4 +1,35 @@
--- Add this at the top for migrations
+-- Drop and recreate constraints
+DELETE FROM notification n1
+WHERE EXISTS (
+    SELECT 1 FROM notification n2
+    WHERE n2.recipient_id = n1.recipient_id
+    AND n2.timestamp = n1.timestamp
+    AND n2.ctid > n1.ctid
+);
+ALTER TABLE notification DROP CONSTRAINT IF EXISTS notification_recipient_timestamp;
+ALTER TABLE notification ADD CONSTRAINT notification_recipient_timestamp UNIQUE (recipient_id, timestamp);
+
+DELETE FROM audit_log a1
+WHERE EXISTS (
+    SELECT 1 FROM audit_log a2
+    WHERE a2.user_email = a1.user_email
+    AND a2.timestamp = a1.timestamp
+    AND a2.ctid > a1.ctid
+);
+ALTER TABLE audit_log DROP CONSTRAINT IF EXISTS audit_log_email_timestamp;
+ALTER TABLE audit_log ADD CONSTRAINT audit_log_email_timestamp UNIQUE (user_email, timestamp);
+
+DELETE FROM faq f1
+WHERE EXISTS (
+    SELECT 1 FROM faq f2
+    WHERE f2.question = f1.question
+    AND f2.organization_id = f1.organization_id
+    AND f2.ctid > f1.ctid
+);
+ALTER TABLE faq DROP CONSTRAINT IF EXISTS faq_question_org_id;
+ALTER TABLE faq ADD CONSTRAINT faq_question_org_id UNIQUE (question, organization_id);
+
+-- Add username column
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS username VARCHAR(100) UNIQUE;
 
 -- Roles
@@ -10,7 +41,8 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO organization (id, name, metadata) VALUES
 (1, 'Acme Corp', NULL), (2, 'Beta Inc', NULL), (3, 'Gamma LLC', NULL), (4, 'Delta Ltd', NULL), (5, 'Epsilon GmbH', NULL),
 (6, 'Zeta SA', NULL), (7, 'Eta BV', NULL), (8, 'Theta PLC', NULL), (9, 'Iota Inc', NULL), (10, 'Kappa Corp', NULL),
-(11, 'Lambda Ltd', NULL), (12, 'Mu GmbH', NULL), (13, 'Nu SA', NULL), (14, 'Xi BV', NULL), (15, 'Omicron PLC', NULL);
+(11, 'Lambda Ltd', NULL), (12, 'Mu GmbH', NULL), (13, 'Nu SA', NULL), (14, 'Xi BV', NULL), (15, 'Omicron PLC', NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- Users (with username)
 INSERT INTO "user" (
@@ -33,7 +65,8 @@ INSERT INTO "user" (
   (14, 'Peggy', 'peggy@xi.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 14, NOW(), true, null, null, 'peggy'),
   (15, 'Sybil', 'sybil@omicron.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 15, NOW(), true, null, null, 'sybil'),
   (16, 'ZioHelp Admin', 'admin@ziohelp.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'adminuser'),
-  (17, 'Developer Admin', 'developer@ziohelp.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'devadmin');
+  (17, 'Developer Admin', 'developer@ziohelp.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'devadmin')
+ON CONFLICT (id) DO NOTHING;
 
 -- User Roles (Many-to-Many join table, including admin and developer admin)
 INSERT INTO user_roles (user_id, role_id) VALUES
@@ -53,7 +86,8 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 (14, 3), -- Peggy is USER
 (15, 3), -- Sybil is USER
 (16, 1), -- ZioHelp Admin is ADMIN
-(17, 2); -- Developer Admin is DEVELOPER
+(17, 2)  -- Developer Admin is DEVELOPER
+ON CONFLICT (user_id, role_id) DO NOTHING; -- Developer Admin is DEVELOPER
 
 -- Tickets
 INSERT INTO ticket (id, title, description, status, priority, created_by, is_guest, created_at, updated_at, organization_id) VALUES
@@ -71,30 +105,35 @@ INSERT INTO ticket (id, title, description, status, priority, created_by, is_gue
 (12, 'Mobile Bug', 'App crashes on iOS', 'OPEN', 'MEDIUM', 'niaj@mu.com', false, NOW(), NOW(), 12),
 (13, 'Export Issue', 'PDF export fails', 'OPEN', 'LOW', 'olivia@nu.com', false, NOW(), NOW(), 13),
 (14, 'Settings', 'Cannot update profile', 'OPEN', 'MEDIUM', 'peggy@xi.com', false, NOW(), NOW(), 14),
-(15, 'Other', 'General feedback', 'OPEN', 'LOW', 'sybil@omicron.com', false, NOW(), NOW(), 15);
+(15, 'Other', 'General feedback', 'OPEN', 'LOW', 'sybil@omicron.com', false, NOW(), NOW(), 15)
+ON CONFLICT (id) DO NOTHING;
 
--- Comments
-INSERT INTO comment (ticket_id, author, message, created_at) VALUES
-(1, 'alice@acme.com', 'We are looking into your login issue.', NOW()),
-(2, 'bob@beta.com', 'Please try another card.', NOW()),
-(3, 'charlie@gamma.com', 'Dark mode is on our roadmap.', NOW()),
-(4, 'david@delta.com', 'Can you provide crash logs?', NOW()),
-(5, 'eve@epsilon.com', 'We have unlocked your account.', NOW());
+-- Comments with auto-generated IDs
+INSERT INTO comment (id, ticket_id, author, message, created_at) VALUES
+(1, 1, 'alice@acme.com', 'We are looking into your login issue.', NOW()),
+(2, 2, 'bob@beta.com', 'Please try another card.', NOW()),
+(3, 3, 'charlie@gamma.com', 'Dark mode is on our roadmap.', NOW()),
+(4, 4, 'david@delta.com', 'Can you provide crash logs?', NOW()),
+(5, 5, 'eve@epsilon.com', 'We have unlocked your account.', NOW())
+ON CONFLICT (id) DO NOTHING;
 
 -- Notifications
 INSERT INTO notification (type, message, seen, timestamp, recipient_id, organization_id) VALUES
 ('NEW_TICKET', 'A new ticket has been created.', false, NOW(), 1, 1),
 ('COMMENT', 'You have a new comment on your ticket.', false, NOW(), 2, 2),
-('STATUS_UPDATE', 'Your ticket status changed to RESOLVED.', false, NOW(), 3, 3);
+('STATUS_UPDATE', 'Your ticket status changed to RESOLVED.', false, NOW(), 3, 3)
+ON CONFLICT (recipient_id, timestamp) DO NOTHING;
 
 -- Audit Logs
+-- Add audit logs
 INSERT INTO audit_log (user_email, action, details, timestamp, organization_id) VALUES
 ('alice@acme.com', 'CREATE', 'Created ticket', NOW(), 1),
 ('judy@kappa.com', 'UPDATE', 'Updated user', NOW(), 10),
 ('olivia@nu.com', 'DELETE', 'Deleted FAQ', NOW(), 13),
 ('admin@ziohelp.com', 'ROLE_UPDATE', 'Roles updated: ["ADMIN", "TENANT_ADMIN"]', NOW(), 1),
 ('developer@ziohelp.com', 'ROLE_UPDATE', 'Role removed: DEVELOPER', NOW(), 1),
-('alice@acme.com', 'ROLE_UPDATE', 'Roles updated: ["ADMIN"]', NOW(), 1);
+('alice@acme.com', 'ROLE_UPDATE', 'Roles updated: ["ADMIN"]', NOW(), 1)
+ON CONFLICT (user_email, timestamp) DO NOTHING;
 
 -- FAQs
 INSERT INTO faq (question, answer, organization_id) VALUES
@@ -112,4 +151,5 @@ INSERT INTO faq (question, answer, organization_id) VALUES
 ('How to report a bug?', 'Submit a ticket with bug details.', 12),
 ('How to request a feature?', 'Submit a ticket with feature request.', 13),
 ('How to change password?', 'Go to profile and select change password.', 14),
-('How to logout?', 'Click the logout button in the top right.', 15);
+('How to logout?', 'Click the logout button in the top right.', 15)
+ON CONFLICT (question, organization_id) DO NOTHING;

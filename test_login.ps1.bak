@@ -1,0 +1,153 @@
+# Test Login API Script for ZioHelp Backend
+$ErrorActionPreference = 'Stop'
+
+Write-Host "ZioHelp Login API Test Suite" -ForegroundColor Cyan
+Write-Host "================================" -ForegroundColor Cyan
+
+# Configuration
+$baseUrl = "http://localhost:8080"
+$apiEndpoint = "$baseUrl/api/auth/login"
+$headers = @{
+    'Content-Type' = 'application/json; charset=utf-8'
+}
+
+# Function to test server availability
+function Test-ServerAvailable {
+    try {
+        $response = Invoke-WebRequest -Uri $baseUrl -Method HEAD -TimeoutSec 5
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+# Function to test login
+function Test-Login {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$TestName,
+        [Parameter(Mandatory=$true)]
+        [hashtable]$TestData,
+        [Parameter(Mandatory=$true)]
+        [int]$ExpectedStatus
+    )
+    
+    Write-Host "`nTest Case: $TestName" -ForegroundColor Yellow
+    Write-Host "--------------------" -ForegroundColor Yellow
+    
+    $body = $TestData | ConvertTo-Json
+    Write-Host "Request URI: $apiEndpoint" -ForegroundColor Gray
+    Write-Host "Request Body: $body" -ForegroundColor Gray
+    
+    try {
+        $response = Invoke-WebRequest -Uri $apiEndpoint -Method Post -Headers $headers -Body $body
+        Write-Host "[SUCCESS] Status code: $($response.StatusCode)" -ForegroundColor Green
+        Write-Host "Response: $($response.Content)" -ForegroundColor Gray
+        
+        if ($response.StatusCode -eq $ExpectedStatus) {
+            Write-Host "✓ Test passed" -ForegroundColor Green
+            return $true
+        } else {
+            Write-Host ("✗ Test failed - Expected status " + $ExpectedStatus + " but got " + $response.StatusCode) -ForegroundColor Red
+            return $false
+        }
+    } catch {
+        $statusCode = $_.Exception.Response.StatusCode.value__
+        Write-Host "[ERROR] Status code: $statusCode" -ForegroundColor Red
+        
+        if ($_.Exception.Response) {
+            $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+            $errorBody = $reader.ReadToEnd()
+            Write-Host "Error details: $errorBody" -ForegroundColor Red
+            $reader.Close()
+        }
+        
+        # Check if we got the expected error status
+        if ($statusCode -eq $ExpectedStatus) {
+            Write-Host "✓ Test passed (expected error)" -ForegroundColor Green
+            return $true
+        } else {
+            Write-Host ("✗ Test failed - Expected status " + $ExpectedStatus + " but got " + $statusCode) -ForegroundColor Red
+            return $false
+        }
+    }
+}
+}
+
+# Check server availability
+Write-Host "`nChecking server availability..." -ForegroundColor Cyan
+if (-not (Test-ServerAvailable)) {
+    Write-Host "Error: Server is not available at $baseUrl" -ForegroundColor Red
+    Write-Host "Please ensure the Spring Boot application is running." -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "Server is available. Running tests..." -ForegroundColor Green
+
+# Define test cases based on LoginRequest validation requirements
+$testCases = @(
+    @{
+        name = "Valid login with email/password"
+        data = @{
+            email = "admin@example.com"
+            password = "password123"
+        }
+        expectedStatus = 200
+    },
+    @{
+        name = "Invalid password (too short)"
+        data = @{
+            email = "admin@example.com"
+            password = "short"  # Less than 6 characters
+        }
+        expectedStatus = 400
+    },
+    @{
+        name = "Invalid email format"
+        data = @{
+            email = "not-an-email"
+            password = "password123"
+        }
+        expectedStatus = 400
+    },
+    @{
+        name = "Empty password"
+        data = @{
+            email = "admin@example.com"
+            password = ""
+        }
+        expectedStatus = 400
+    },
+    @{
+        name = "Username login instead of email"
+        data = @{
+            username = "admin123"
+            password = "password123"
+        }
+        expectedStatus = 200
+    },
+    @{
+        name = "Invalid username format (special chars)"
+        data = @{
+            username = "admin@#$%"
+            password = "password123"
+        }
+        expectedStatus = 400
+    }
+)
+
+# Run all tests
+$failedTests = 0
+foreach ($test in $testCases) {
+    $success = Test-Login -TestName $test.name -TestData $test.data -ExpectedStatus $test.expectedStatus
+    if (-not $success) {
+        $failedTests++
+    }
+}
+
+# Print summary
+Write-Host "`nTest Summary" -ForegroundColor Cyan
+Write-Host "===========" -ForegroundColor Cyan
+Write-Host "Total Tests: $($testCases.Count)" -ForegroundColor White
+Write-Host "Failed Tests: $failedTests" -ForegroundColor $(if ($failedTests -eq 0) { 'Green' } else { 'Red' })
+Write-Host "Success Rate: $(100 - ($failedTests/$testCases.Count*100))%" -ForegroundColor $(if ($failedTests -eq 0) { 'Green' } else { 'Yellow' })

@@ -47,9 +47,9 @@ api.interceptors.response.use(
 
 // Authentication API
 export const authAPI = {
-  login: async (email: string, password: string) => {
+  login: async (credentials: { email?: string; username?: string; password: string }) => {
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', credentials);
       toast.success('Login successful!');
       // Check for ADMIN role in response
       const roles = res.data.roles || res.data.data?.roles || [];
