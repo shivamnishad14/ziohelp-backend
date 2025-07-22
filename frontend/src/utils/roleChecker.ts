@@ -1,6 +1,6 @@
 export function hasRole(required: string | string[]): boolean {
-  const userRole = localStorage.getItem('userRole');
-  if (!userRole) return false;
-  if (Array.isArray(required)) return required.includes(userRole);
-  return userRole === required;
+  const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+  if (!userRoles || userRoles.length === 0) return false;
+  if (Array.isArray(required)) return required.some(r => userRoles.includes(r));
+  return userRoles.includes(required);
 } 

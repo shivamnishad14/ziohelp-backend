@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  useListFAQs, 
+  useFAQs, 
   useCreateFAQ, 
   useSearchFAQs,
   useFAQsByProduct,
@@ -28,6 +28,7 @@ import { useListProducts } from '@/hooks/api/useProducts';
 import { useAuth } from '@/hooks/api/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import axios from 'axios';
+import { UserRole } from '@/hooks/api/useUsers';
 
 interface FAQFormData {
   question: string;
@@ -57,7 +58,7 @@ const FAQManagement: React.FC = () => {
   const userRole: UserRole = (user?.role as UserRole) || '';
 
   // Queries
-  const { data: faqs, isLoading } = useListFAQs();
+  const { data: faqs, isLoading } = useFAQs();
 
   const { data: searchResults } = useSearchFAQs(searchQuery);
 

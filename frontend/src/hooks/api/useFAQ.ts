@@ -1,113 +1,78 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../services/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { faqAPI } from '../../services/api';
 
-export interface FAQ {
-  id: number;
-  productId: number;
-  question: string;
-  answer: string;
-  category: string;
-  orderIndex?: number;
-  isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export function useListFAQs() {
+export function useFAQs(params?: { search?: string; page?: number; size?: number; sortBy?: string; sortDir?: string }) {
   return useQuery({
-    queryKey: ['faqs'],
-    queryFn: async () => {
-      const { data } = await api.get('/faqs');
-      return data.data || data;
-    },
+    queryKey: ['faqs', params],
+    queryFn: () => faqAPI.getAll(params).then(res => res.data),
   });
 }
 
-export function useCreateFAQ() {
+export function useFAQ(id: string | number) {
+  return useQuery({
+    queryKey: ['faq', id],
+    queryFn: () => faqAPI.getById(id).then(res => res.data),
+    enabled: !!id,
+  });
+}
+
+export function useUpdateFAQ() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (faq: Partial<FAQ>) => {
-      const { data } = await api.post('/faqs', faq);
-      return data.data || data;
-    },
+    mutationFn: ({ id, faq }: { id: string | number; faq: { question: string; answer: string } }) => faqAPI.update(id, faq),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
     },
   });
 }
 
-export function useSearchFAQs(query: string) {
-  return useQuery({
-    queryKey: ['faqs-search', query],
-    queryFn: async () => {
-      const { data } = await api.get('/faqs/search', { params: { query } });
-      return data.data || data;
+export function useDeleteFAQ() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string | number) => faqAPI.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['faqs'] });
     },
-    enabled: !!query,
-  });
-}
-
-export function useFAQsByProduct(productId: number) {
-  return useQuery({
-    queryKey: ['faqs-product', productId],
-    queryFn: async () => {
-      const { data } = await api.get(`/faqs/product/${productId}`);
-      return data.data || data;
-    },
-    enabled: !!productId,
-  });
-}
-
-export function useSearchFAQsByProduct(productId: number, query: string) {
-  return useQuery({
-    queryKey: ['faqs-product-search', productId, query],
-    queryFn: async () => {
-      const { data } = await api.get(`/faqs/product/${productId}/search`, { params: { query } });
-      return data.data || data;
-    },
-    enabled: !!productId && !!query,
   });
 }
 
 export function useFAQsByCategory(category: string) {
   return useQuery({
     queryKey: ['faqs-category', category],
-    queryFn: async () => {
-      const { data } = await api.get(`/faqs/category/${category}`);
-      return data.data || data;
-    },
+    queryFn: () => faqAPI.getByCategory(category).then(res => res.data),
     enabled: !!category,
-  });
-}
-
-export function useFAQsByProductAndCategory(productId: number, category: string) {
-  return useQuery({
-    queryKey: ['faqs-product-category', productId, category],
-    queryFn: async () => {
-      const { data } = await api.get(`/faqs/product/${productId}/category/${category}`);
-      return data.data || data;
-    },
-    enabled: !!productId && !!category,
   });
 }
 
 export function useFAQCategories() {
   return useQuery({
     queryKey: ['faq-categories'],
-    queryFn: async () => {
-      const { data } = await api.get('/faqs/categories');
-      return data.data || data;
+    queryFn: () => faqAPI.getCategories().then(res => res.data),
+  });
+}
+
+export function useCreateFAQ() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (faq: { question: string; answer: string; organization_id?: number }) => faqAPI.create(faq),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['faqs'] });
     },
   });
 }
 
-export function useFAQCategoriesByProduct(productId: number) {
+export function useFAQsByProduct(productId: string | number) {
   return useQuery({
-    queryKey: ['faq-categories-product', productId],
-    queryFn: async () => {
-      const { data } = await api.get(`/faqs/product/${productId}/categories`);
-      return data.data || data;
-    },
+    queryKey: ['faqs-product', productId],
+    queryFn: () => faqAPI.getByProduct(productId).then(res => res.data),
     enabled: !!productId,
+  });
+}
+
+export function useSearchFAQs(query: string) {
+  return useQuery({
+    queryKey: ['faqs-search', query],
+    queryFn: () => faqAPI.search(query).then(res => res.data),
+    enabled: !!query,
   });
 } 

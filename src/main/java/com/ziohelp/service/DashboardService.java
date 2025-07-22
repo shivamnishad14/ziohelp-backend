@@ -61,7 +61,10 @@ public class DashboardService {
         stats.put("activeUsers", activeUsers);
         stats.put("resolutionRate", totalTickets > 0 ? (double) (resolvedTickets + closedTickets) / totalTickets * 100 : 0);
         stats.put("averageResolutionTime", calculateAverageResolutionTime(startDate, endDate));
-        stats.put("dateRange", Map.of("startDate", startDate.toString(), "endDate", endDate.toString()));
+        Map<String, String> dateRange = new HashMap<>();
+        dateRange.put("startDate", startDate.toString());
+        dateRange.put("endDate", endDate.toString());
+        stats.put("dateRange", dateRange);
 
         return stats;
     }

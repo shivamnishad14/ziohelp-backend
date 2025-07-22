@@ -1,4 +1,4 @@
-pimport { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productAPI, userAPI, ticketAPI, knowledgeBaseAPI, aiAPI, fileAPI, organizationAPI } from '../services/api';
 import { Product, User, Ticket, KnowledgeBaseArticle } from '../types';
 
@@ -52,11 +52,10 @@ export const useDeleteProduct = () => {
 };
 
 // User hooks
-export const useUsers = (productId: string, pageable?: any) => {
+export const useUsers = (params?: { page?: number; size?: number; search?: string; sortBy?: string; sortDir?: string }) => {
   return useQuery({
-    queryKey: ['users', productId, pageable],
-    queryFn: () => userAPI.getAll(productId, pageable),
-    enabled: !!productId,
+    queryKey: ['users', params],
+    queryFn: () => userAPI.getAll(params),
   });
 };
 
@@ -102,11 +101,10 @@ export const useDeleteUser = () => {
 };
 
 // Ticket hooks
-export const useTickets = (productId: string, pageable?: any) => {
+export const useTickets = (params?: { page?: number; size?: number; status?: string; search?: string; sortBy?: string; sortDir?: string }) => {
   return useQuery({
-    queryKey: ['tickets', productId, pageable],
-    queryFn: () => ticketAPI.getAll(productId, pageable),
-    enabled: !!productId,
+    queryKey: ['tickets', params],
+    queryFn: () => ticketAPI.getAll(params),
   });
 };
 

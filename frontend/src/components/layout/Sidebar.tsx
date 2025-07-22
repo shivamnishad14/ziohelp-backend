@@ -64,14 +64,26 @@ const navigationByRole: Record<Role, NavigationItem[]> = {
 };
 
 function getNavigation(): NavigationItem[] {
-  const userRole = (localStorage.getItem('userRole') as Role) || 'USER';
-  const nav = navigationByRole[userRole] || navigationByRole['USER'];
+  const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+  let nav: NavigationItem[] = [];
+  if (userRoles.length === 0) {
+    nav = navigationByRole['USER'];
+  } else {
+    // Merge and deduplicate menu items for all roles
+    const seen = new Set();
+    userRoles.forEach((role: Role) => {
+      (navigationByRole[role] || []).forEach((item) => {
+        const key = item.name + item.href;
+        if (!seen.has(key)) {
+          nav.push(item);
+          seen.add(key);
+        }
+      });
+    });
+  }
   // Add Profile link for all roles except GUEST
-  if (userRole !== 'GUEST') {
-    return [
-      ...nav,
-      { name: 'Profile', href: '/profile', icon: UserCheck },
-    ];
+  if (!userRoles.includes('GUEST')) {
+    nav.push({ name: 'Profile', href: '/profile', icon: UserCheck });
   }
   return nav;
 }
@@ -142,7 +154,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="border-t border-border p-4">
             <div className="flex items-center space-x-3">
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-sm font-medium text-foreground">{user.name.charAt(0).toUpperCase()}</span>
+                <span className="text-sm font-medium text-foreground">{(user.name && user.name.charAt(0).toUpperCase()) || 'U'}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">

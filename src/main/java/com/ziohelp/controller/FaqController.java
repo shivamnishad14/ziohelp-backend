@@ -93,4 +93,46 @@ public class FaqController {
         faq.setOrganization(org);
         return ResponseEntity.ok(faqRepository.save(faq));
     }
+
+    @PostMapping
+    public ResponseEntity<Faq> createFaq(@RequestBody Faq faq) {
+        return ResponseEntity.ok(faqRepository.save(faq));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
+    public ResponseEntity<Faq> getFaqById(@PathVariable Long id) {
+        return faqRepository.findById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')")
+    public ResponseEntity<Faq> updateFaq(@PathVariable Long id, @RequestBody Faq faq) {
+        Faq existing = faqRepository.findById(id).orElseThrow(() -> new RuntimeException("FAQ not found"));
+        existing.setQuestion(faq.getQuestion());
+        existing.setAnswer(faq.getAnswer());
+        faqRepository.save(existing);
+        return ResponseEntity.ok(existing);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')")
+    public ResponseEntity<?> deleteFaq(@PathVariable Long id) {
+        faqRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/by-category/{category}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
+    public ResponseEntity<List<Faq>> getFaqsByCategory(@PathVariable String category) {
+        return ResponseEntity.ok(faqRepository.findByCategory(category));
+    }
+
+    @GetMapping("/categories")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
+    public ResponseEntity<List<String>> getCategories() {
+        return ResponseEntity.ok(faqRepository.findDistinctCategories());
+    }
 } 

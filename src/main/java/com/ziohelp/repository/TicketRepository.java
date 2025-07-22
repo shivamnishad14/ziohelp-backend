@@ -20,7 +20,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findAllByOrderByCreatedAtDesc();
     List<Ticket> findByCreatedByOrderByCreatedAtDesc(String createdBy);
-    List<Ticket> findByOrganizationId(Long organizationId);
+    
+    // Fixed organization queries
+    @Query("SELECT t FROM Ticket t WHERE t.organization.id = :organizationId")
+    List<Ticket> findByOrganizationId(@Param("organizationId") Long organizationId);
 
     @Query("SELECT t FROM Ticket t WHERE (:status IS NULL OR t.status = :status) AND (:fromDate IS NULL OR t.createdAt >= :fromDate) AND (:toDate IS NULL OR t.createdAt <= :toDate) ORDER BY t.createdAt DESC")
     List<Ticket> findAllFiltered(@Param("status") String status, @Param("fromDate") LocalDateTime fromDate, @Param("toDate") LocalDateTime toDate);
@@ -34,13 +37,17 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByAssignedTo(User assignedTo);
     List<Ticket> findByAssignedToId(Long assignedToId);
-    List<Ticket> findByOrganizationIdAndAssignedToId(Long organizationId, Long assignedToId);
     
-    // Add missing methods
+    @Query("SELECT t FROM Ticket t WHERE t.organization.id = :organizationId AND t.assignedTo.id = :assignedToId")
+    List<Ticket> findByOrganizationIdAndAssignedToId(@Param("organizationId") Long organizationId, @Param("assignedToId") Long assignedToId);
+    
+    // Add missing methods with proper queries
     long countByStatusAndCreatedAtBetween(String status, LocalDateTime start, LocalDateTime end);
     List<Ticket> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     long countByStatusAndUpdatedAtBetween(String status, LocalDateTime start, LocalDateTime end);
     long countByStatusAndUpdatedAtAfter(String status, LocalDateTime after);
     List<Ticket> findByStatusInAndCreatedAtBetween(List<String> statuses, LocalDateTime start, LocalDateTime end);
-    long countByOrganizationIdAndStatusAndCreatedAtBetween(Long organizationId, String status, LocalDateTime start, LocalDateTime end);
+    
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.organization.id = :organizationId AND t.status = :status AND t.createdAt BETWEEN :start AND :end")
+    long countByOrganizationIdAndStatusAndCreatedAtBetween(@Param("organizationId") Long organizationId, @Param("status") String status, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 } 

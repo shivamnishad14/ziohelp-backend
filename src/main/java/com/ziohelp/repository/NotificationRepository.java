@@ -10,8 +10,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByRecipientAndSeenFalse(User recipient);
     List<Notification> findByOrganizationId(Long organizationId);
     
-    // Add missing methods
-    List<Notification> findByRecipientIdOrderByTimestampDesc(String recipientId);
-    List<Notification> findByRecipientIdAndSeenFalse(String recipientId);
-    long countByRecipientIdAndSeenFalse(String recipientId);
+    // Updated methods to use recipient relationship
+    List<Notification> findByRecipientOrderByTimestampDesc(User recipient);
+    long countByRecipientAndSeenFalse(User recipient);
 } 

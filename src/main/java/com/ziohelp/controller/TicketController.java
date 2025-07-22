@@ -32,6 +32,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import com.ziohelp.repository.UserRepository;
 import com.ziohelp.entity.User;
 import com.ziohelp.service.AccessControlService;
+import com.ziohelp.entity.Comment;
+import com.ziohelp.repository.CommentRepository;
+import com.ziohelp.service.AuditLogService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -47,6 +51,9 @@ public class TicketController {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final AccessControlService accessControlService;
+    private final CommentRepository commentRepository;
+    @Autowired
+    private AuditLogService auditLogService;
 
     // For demo: store last assigned developer per org in memory
     private static final java.util.Map<Long, Integer> lastAssignedDevIndex = new java.util.HashMap<>();
@@ -125,6 +132,7 @@ public class TicketController {
         Ticket saved = ticketRepository.save(ticket);
         notificationService.sendNotification("New ticket created: " + saved.getTitle());
         notificationService.sendTicketEvent("NEW", saved);
+        auditLogService.logActivity("TICKET_CREATE", "Created ticket: " + saved.getId(), saved.getCreatedBy());
         return ResponseEntity.ok(saved);
     }
 
@@ -138,6 +146,7 @@ public class TicketController {
         Ticket saved = ticketRepository.save(ticket);
         notificationService.sendNotification("Ticket resolved: " + saved.getTitle());
         notificationService.sendTicketEvent("RESOLVED", saved);
+        auditLogService.logActivity("TICKET_RESOLVE", "Resolved ticket: " + saved.getId(), currentUser.getEmail());
         return ResponseEntity.ok(saved);
     }
 
@@ -243,5 +252,49 @@ public class TicketController {
         notificationService.sendNotification("Ticket assigned: " + ticket.getTitle());
         notificationService.sendTicketEvent("ASSIGNED", ticket);
         return ResponseEntity.ok(ticketRepository.save(ticket));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')")
+    public ResponseEntity<?> deleteTicket(@PathVariable Long id) {
+        ticketRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/comments")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'DEVELOPER', 'USER')")
+    public ResponseEntity<Comment> addComment(@PathVariable Long id, @RequestBody Comment comment) {
+        Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
+        comment.setTicket(ticket);
+        comment.setCreatedAt(java.time.LocalDateTime.now());
+        return ResponseEntity.ok(commentRepository.save(comment));
+    }
+
+    @GetMapping("/{id}/comments")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'DEVELOPER', 'USER')")
+    public ResponseEntity<List<Comment>> listComments(@PathVariable Long id) {
+        return ResponseEntity.ok(commentRepository.findByTicketId(id));
+    }
+
+    @DeleteMapping("/{ticketId}/comments/{commentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'DEVELOPER', 'USER')")
+    public ResponseEntity<?> deleteComment(@PathVariable Long ticketId, @PathVariable Long commentId) {
+        commentRepository.deleteById(commentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/list")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'DEVELOPER', 'USER')")
+    public ResponseEntity<Page<Ticket>> listTickets(@RequestParam(defaultValue = "0") int page,
+                                                   @RequestParam(defaultValue = "10") int size,
+                                                   @RequestParam(required = false) String status,
+                                                   @RequestParam(required = false) String priority,
+                                                   @RequestParam(required = false) String assignee,
+                                                   @RequestParam(required = false) String product,
+                                                   @RequestParam(required = false) String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        // Implement filtering logic as needed
+        Page<Ticket> tickets = ticketRepository.findAll(pageable); // Replace with actual filtering
+        return ResponseEntity.ok(tickets);
     }
 } 

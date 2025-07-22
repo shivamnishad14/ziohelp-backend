@@ -17,10 +17,16 @@ public class User {
     private Long id;
 
     private String fullName;
+    @Column(name = "email")
     private String email;
     private String password;
     private boolean approved;
     private boolean active;
+    private String verificationToken;
+    private boolean emailVerified = false;
+    private String resetToken;
+    @Column(unique = true)
+    private String username;
 
     @Column(name = "created_at")
     private java.time.LocalDateTime createdAt;
@@ -70,4 +76,7 @@ public class User {
     public Long getOrganizationId() { 
         return organization != null ? organization.getId() : null; 
     }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 } 

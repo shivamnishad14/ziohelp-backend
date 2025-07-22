@@ -12,15 +12,17 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole, roles }) => {
   const location = useLocation();
   const isAuthenticated = authAPI.isAuthenticated();
+  const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+  console.log('userRoles:', userRoles);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (roles && roles.length > 0 && !hasRole(roles)) {
+  if (roles && roles.length > 0 && !roles.some(r => userRoles.includes(r))) {
     return <Navigate to="/unauthorized" replace />;
   }
-  if (requiredRole && !hasRole(requiredRole)) {
+  if (requiredRole && !userRoles.includes(requiredRole)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

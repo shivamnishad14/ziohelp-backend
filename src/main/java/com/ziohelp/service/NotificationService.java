@@ -3,8 +3,10 @@ package com.ziohelp.service;
 import com.ziohelp.entity.Notification;
 import com.ziohelp.entity.Ticket;
 import com.ziohelp.entity.User;
+import com.ziohelp.entity.Organization;
 import com.ziohelp.repository.NotificationRepository;
 import com.ziohelp.repository.UserRepository;
+import com.ziohelp.service.OrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 @Service
 public class NotificationService {
@@ -29,15 +32,38 @@ public class NotificationService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private OrganizationService organizationService;
+
     public void sendTicketNotification(Ticket ticket, String type, String message) {
+        // Get the user by email
+        User recipient = userRepository.findByEmail(ticket.getCreatedBy()).orElse(null);
+        
+        if (recipient == null) {
+            // If user not found, create notification without recipient
+            Organization org = organizationService.getOrganizationById(ticket.getOrganizationId());
+            Notification notification = Notification.builder()
+                    .type(type)
+                    .message(message)
+                    .seen(false)
+                    .timestamp(LocalDateTime.now())
+                    .recipient(null)
+                    .organization(org)
+                    .build();
+            
+            notificationRepository.save(notification);
+            return;
+        }
+
         // Create notification record
+        Organization org = organizationService.getOrganizationById(ticket.getOrganizationId());
         Notification notification = Notification.builder()
                 .type(type)
                 .message(message)
                 .seen(false)
                 .timestamp(LocalDateTime.now())
-                .recipientId(ticket.getCreatedBy())
-                .organization(ticket.getOrganization())
+                .recipient(recipient)
+                .organization(org)
                 .build();
         
         notificationRepository.save(notification);
@@ -67,6 +93,7 @@ public class NotificationService {
 
     public void sendSystemNotification(String type, String message, Long organizationId) {
         // Get all users in the organization
+        Organization org = organizationService.getOrganizationById(organizationId);
         List<User> users = userRepository.findByOrganizationId(organizationId);
         
         for (User user : users) {
@@ -75,8 +102,8 @@ public class NotificationService {
                     .message(message)
                     .seen(false)
                     .timestamp(LocalDateTime.now())
-                    .recipientId(user.getEmail())
-                    .organization(user.getOrganization())
+                    .recipient(user)
+                    .organization(org)
                     .build();
             
             notificationRepository.save(notification);
@@ -195,7 +222,11 @@ public class NotificationService {
     }
 
     public List<Notification> getUserNotifications(String userEmail) {
-        return notificationRepository.findByRecipientIdOrderByTimestampDesc(userEmail);
+        User user = userRepository.findByEmail(userEmail).orElse(null);
+        if (user == null) {
+            return new ArrayList<>();
+        }
+        return notificationRepository.findByRecipientOrderByTimestampDesc(user);
     }
 
     public void markNotificationAsSeen(Long notificationId) {
@@ -206,36 +237,40 @@ public class NotificationService {
     }
 
     public void markAllNotificationsAsSeen(String userEmail) {
-        List<Notification> notifications = notificationRepository.findByRecipientIdAndSeenFalse(userEmail);
-        for (Notification notification : notifications) {
-            notification.setSeen(true);
-            notificationRepository.save(notification);
+        User user = userRepository.findByEmail(userEmail).orElse(null);
+        if (user != null) {
+            List<Notification> notifications = notificationRepository.findByRecipientAndSeenFalse(user);
+            for (Notification notification : notifications) {
+                notification.setSeen(true);
+                notificationRepository.save(notification);
+            }
         }
     }
 
     public long getUnreadNotificationCount(String userEmail) {
-        return notificationRepository.countByRecipientIdAndSeenFalse(userEmail);
+        User user = userRepository.findByEmail(userEmail).orElse(null);
+        if (user == null) {
+            return 0;
+        }
+        return notificationRepository.countByRecipientAndSeenFalse(user);
     }
 
     private void sendEmailNotification(Ticket ticket, String type, String message) {
         try {
             String subject = String.format("Ticket Update - #%d", ticket.getId());
-            String emailBody = String.format("""
-                Hello,
-                
-                %s
-                
-                Ticket Details:
-                - ID: %d
-                - Title: %s
-                - Status: %s
-                - Priority: %s
-                
-                You can view the ticket at: http://localhost:3000/tickets/%d
-                
-                Best regards,
-                ZioHelp Support Team
-                """, message, ticket.getId(), ticket.getTitle(), ticket.getStatus(), ticket.getPriority(), ticket.getId());
+            String emailBody = String.format(
+                "Hello,\n\n" +
+                "%s\n\n" +
+                "Ticket Details:\n" +
+                "- ID: %d\n" +
+                "- Title: %s\n" +
+                "- Status: %s\n" +
+                "- Priority: %s\n\n" +
+                "You can view the ticket at: http://localhost:3000/tickets/%d\n\n" +
+                "Best regards,\n" +
+                "ZioHelp Support Team\n",
+                message, ticket.getId(), ticket.getTitle(), ticket.getStatus(), ticket.getPriority(), ticket.getId()
+            );
             
             emailService.sendEmail(ticket.getCreatedBy(), subject, emailBody);
         } catch (Exception e) {
@@ -252,8 +287,8 @@ public class NotificationService {
                 .message(message)
                 .seen(false)
                 .timestamp(LocalDateTime.now())
-                .recipientId(user.getEmail())
-                .organization(user.getOrganization())
+                .recipient(user)
+                .organization(user.getOrganization()) // Assuming User entity has an organization field
                 .build();
         
         notificationRepository.save(notification);
@@ -277,18 +312,15 @@ public class NotificationService {
         
         // Send email with reset token
         String subject = "Password Reset Request";
-        String emailBody = String.format("""
-            Hello,
-            
-            You have requested a password reset for your ZioHelp account.
-            
-            Reset Token: %s
-            
-            If you did not request this reset, please ignore this email.
-            
-            Best regards,
-            ZioHelp Support Team
-            """, resetToken);
+        String emailBody = String.format(
+            "Hello,\n\n" +
+            "You have requested a password reset for your ZioHelp account.\n\n" +
+            "Reset Token: %s\n\n" +
+            "If you did not request this reset, please ignore this email.\n\n" +
+            "Best regards,\n" +
+            "ZioHelp Support Team\n",
+            resetToken
+        );
         
         try {
             emailService.sendEmail(email, subject, emailBody);

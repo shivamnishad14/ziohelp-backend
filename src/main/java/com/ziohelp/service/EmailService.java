@@ -211,4 +211,13 @@ public class EmailService {
         
         sendEmail(to, subject, htmlContent);
     }
+
+    public void sendVerificationEmail(String to, String verificationToken) {
+        Context context = new Context();
+        context.setVariable("verificationToken", verificationToken);
+        context.setVariable("frontendUrl", frontendUrl);
+        String htmlContent = templateEngine.process("email-verification", context);
+        String subject = "Verify your email - ZioHelp";
+        sendEmail(to, subject, htmlContent);
+    }
 } 

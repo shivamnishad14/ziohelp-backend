@@ -38,6 +38,7 @@ api.interceptors.response.use(
       localStorage.removeItem('authToken');
       localStorage.removeItem('userRole');
       localStorage.removeItem('userInfo');
+      localStorage.removeItem('userRoles');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -50,7 +51,22 @@ export const authAPI = {
     try {
       const res = await api.post('/auth/login', { email, password });
       toast.success('Login successful!');
-      window.location.href = '/dashboard';
+      // Check for ADMIN role in response
+      const roles = res.data.roles || res.data.data?.roles || [];
+      localStorage.setItem('userRoles', JSON.stringify(roles));
+      if (roles.includes('ADMIN')) {
+        window.location.href = '/master-admin/dashboard';
+      } else if (roles.includes('TENANT_ADMIN')) {
+        window.location.href = '/tenant-admin/dashboard';
+      } else if (roles.includes('DEVELOPER')) {
+        window.location.href = '/developer/dashboard';
+      } else if (roles.includes('USER')) {
+        window.location.href = '/dashboard';
+      } else if (roles.includes('GUEST')) {
+        window.location.href = '/guest/dashboard';
+      } else {
+        window.location.href = '/dashboard'; // fallback
+      }
       return res;
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Login failed');
@@ -80,6 +96,7 @@ export const authAPI = {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('userRoles');
   }
 };
 
@@ -264,6 +281,53 @@ export const organizationAPI = {
       params 
     }),
   // Add more methods as needed
+};
+
+// Notification API
+export const notificationAPI = {
+  send: (message: string) => api.post('/notifications/send', message, {
+    headers: { 'Content-Type': 'application/json' },
+  }),
+  getByOrganization: (orgId: string | number) => api.get(`/notifications/by-org/${orgId}`),
+};
+
+// FAQ API
+export const faqAPI = {
+  getAll: (params?: { search?: string; page?: number; size?: number; sortBy?: string; sortDir?: string }) =>
+    api.get('/faq', { params }),
+  getById: (id: string | number) =>
+    api.get(`/faq/${id}`),
+  update: (id: string | number, faq: { question: string; answer: string }) =>
+    api.put(`/faq/${id}`, faq),
+  delete: (id: string | number) =>
+    api.delete(`/faq/${id}`),
+  getByCategory: (category: string) =>
+    api.get(`/faq/by-category/${category}`),
+  getCategories: () =>
+    api.get('/faq/categories'),
+  create: (faq: { question: string; answer: string; organization_id?: number }) =>
+    api.post('/faq', faq),
+  getByProduct: (productId: string | number) =>
+    api.get(`/faq/by-product/${productId}`),
+  search: (query: string) =>
+    api.get('/faq/search', { params: { query } }),
+};
+
+// Dashboard API
+export const dashboardAPI = {
+  getStats: (params?: { startDate?: string; endDate?: string }) =>
+    api.get('/v1/dashboard/stats', { params }),
+};
+
+// AuditLog API
+export const auditLogAPI = {
+  getByOrganization: (orgId: string | number) => api.get(`/audit-logs/by-org/${orgId}`),
+};
+
+// GuestTicket API
+export const guestTicketAPI = {
+  submit: (ticket: any) => api.post('/tickets/guest', ticket),
+  getStatus: (id: string | number, email: string) => api.get(`/tickets/guest/${id}/${email}`),
 };
 
 export default api; 

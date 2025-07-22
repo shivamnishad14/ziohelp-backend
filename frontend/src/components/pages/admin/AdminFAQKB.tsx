@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Layout } from '../../components/layout/Layout';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
-import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
+import { Layout } from '../../../components/layout/Layout';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../../components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../components/ui/dialog';
+import { Input } from '../../../components/ui/input';
+import { Textarea } from '../../../components/ui/textarea';
 
 interface FAQ {
   id: number;

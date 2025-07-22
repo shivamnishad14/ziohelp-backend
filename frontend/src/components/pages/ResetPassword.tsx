@@ -1,88 +1,75 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { authAPI } from '../../services/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const token = searchParams.get('token') || '';
+  const navigate = useNavigate();
+  const token = searchParams.get('token');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
-    if (password !== confirm) {
-      setError('Passwords do not match.');
+    if (!token) {
+      setStatus('error');
+      setMessage('Invalid or missing reset token.');
       return;
     }
-    setLoading(true);
+    setStatus('loading');
     try {
-      const res = await authAPI.resetPassword(token, password);
-      setMessage(res.data.message || 'Password reset successful.');
-      setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to reset password.');
-    } finally {
-      setLoading(false);
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword })
+      });
+      const msg = await res.text();
+      if (res.ok) {
+        setStatus('success');
+        setMessage(msg || 'Password reset successful!');
+      } else {
+        setStatus('error');
+        setMessage(msg || 'Password reset failed.');
+      }
+    } catch (err) {
+      setStatus('error');
+      setMessage('Password reset failed.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Reset Password</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">Enter your new password.</p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="password" className="sr-only">New Password</label>
-              <input
-                id="password"
-                name="password"
+    <div className="flex justify-center items-center min-h-screen">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Reset Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {status === 'success' ? (
+            <>
+              <p className="text-green-600">{message}</p>
+              <Button className="mt-4 w-full" onClick={() => navigate('/login')}>Go to Login</Button>
+            </>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
                 type="password"
-                autoComplete="new-password"
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="New password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
               />
-            </div>
-            <div>
-              <label htmlFor="confirm" className="sr-only">Confirm Password</label>
-              <input
-                id="confirm"
-                name="confirm"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-              />
-            </div>
-          </div>
-          {error && <div className="rounded-md bg-red-50 p-4"><div className="text-sm text-red-700">{error}</div></div>}
-          {message && <div className="rounded-md bg-green-50 p-4"><div className="text-sm text-green-700">{message}</div></div>}
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Resetting...' : 'Reset Password'}
-            </button>
-          </div>
-        </form>
-      </div>
+              {status === 'error' && <p className="text-red-500">{message}</p>}
+              <Button type="submit" className="w-full" disabled={status === 'loading'}>
+                {status === 'loading' ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -14,7 +14,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGeneric(Exception ex) {
+    public ResponseEntity<?> handleGeneric(Exception ex) {
+        ex.printStackTrace(); // Log the error
         return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 } 

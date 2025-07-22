@@ -17,4 +17,9 @@ public interface FaqRepository extends JpaRepository<Faq, Long> {
 
     @Query("SELECT f FROM Faq f WHERE f.organization.id = :orgId AND (:search IS NULL OR LOWER(f.question) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(f.answer) LIKE LOWER(CONCAT('%', :search, '%')))" )
     Page<Faq> findByOrganizationIdPaged(@Param("orgId") Long orgId, @Param("search") String search, Pageable pageable);
+
+    List<Faq> findByCategory(String category);
+
+    @Query("SELECT DISTINCT f.category FROM Faq f")
+    List<String> findDistinctCategories();
 } 

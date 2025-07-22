@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
-import Login from './components/Login';
+import Login from './components/pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import ForgotPassword from './components/pages/ForgotPassword';
 import ResetPassword from './components/pages/ResetPassword';
@@ -27,11 +27,23 @@ import Profile from './components/pages/user/Profile';
 import GuestTicketStatus from './components/pages/guest/GuestTicketStatus';
 import GuestRaiseTicket from './components/pages/guest/GuestRaiseTicket';
 import GuestTicketManagement from './components/pages/guest/GuestTicketManagement';
+import VerifyEmail from './components/pages/VerifyEmail';
+import { getDashboardRoute } from '@/utils/getDashboardRoute';
+
+function AutoRedirect() {
+  const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+  if (userRoles.length > 0) {
+    window.location.href = getDashboardRoute(userRoles);
+    return null;
+  }
+  window.location.href = '/login';
+  return null;
+}
 
 export function HelpdeskRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<AutoRedirect />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
@@ -39,6 +51,7 @@ export function HelpdeskRoutes() {
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/help-center" element={<HelpCenter />} />
       <Route path="/guest-ticket-status" element={<GuestTicketStatus />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       {/* User Dashboard */}
       <Route path="/dashboard" element={
         <ProtectedRoute roles={['USER']}>

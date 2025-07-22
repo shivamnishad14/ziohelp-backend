@@ -268,6 +268,18 @@ const TicketManagement: React.FC = () => {
     }
   };
 
+  const handleEditTicket = (ticket: any) => {
+    setSelectedTicket(ticket);
+    setFormData({
+      subject: ticket.subject || '',
+      description: ticket.description || '',
+      priority: ticket.priority || 'MEDIUM',
+      category: ticket.category || 'GENERAL',
+      productId: ticket.productId || 1
+    });
+    setIsEditDialogOpen(true);
+  };
+
   function getStatusBadgeVariant(status: string) {
     switch (status) {
       case 'OPEN': return 'default';
@@ -438,11 +450,11 @@ const TicketManagement: React.FC = () => {
 
         <TabsContent value="assigned" className="space-y-4">
           <TicketsTable 
-            tickets={[]} // TODO: Implement assigned tickets
-            isLoading={false}
+            tickets={tickets.filter(ticket => ticket.assignedTo?.id === user?.id)}
+            isLoading={isLoading}
             userRole={userRole}
-            totalElements={0} // No total elements for assigned tickets
-            onEdit={() => {}}
+            totalElements={tickets.filter(ticket => ticket.assignedTo?.id === user?.id).length}
+            onEdit={handleEditTicket}
             onAssign={(ticket) => {
               setSelectedTicket(ticket);
               setIsAssignDialogOpen(true);
@@ -461,15 +473,18 @@ const TicketManagement: React.FC = () => {
 
         <TabsContent value="my" className="space-y-4">
           <TicketsTable 
-            tickets={[]} // TODO: Implement my tickets
-            isLoading={false}
+            tickets={tickets.filter(ticket => ticket.createdBy === user?.email)}
+            isLoading={isLoading}
             userRole={userRole}
-            totalElements={0} // No total elements for my tickets
-            onEdit={() => {}}
+            totalElements={tickets.filter(ticket => ticket.createdBy === user?.email).length}
+            onEdit={handleEditTicket}
             onAssign={() => {}}
             onResolve={() => {}}
-            onComment={() => {}}
-            onDelete={() => {}}
+            onComment={(ticket) => {
+              setSelectedTicket(ticket);
+              setIsCommentDialogOpen(true);
+            }}
+            onDelete={handleDeleteTicket}
           />
         </TabsContent>
       </Tabs>

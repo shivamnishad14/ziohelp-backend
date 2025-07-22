@@ -27,7 +27,7 @@ export interface AuthUser {
 export function useLogin() {
   return useMutation({
     mutationFn: async (payload: { email: string; password: string }) => {
-      const { data } = await api.post('/api/v1/auth/login', payload);
+      const { data } = await api.post('/api/auth/login', payload);
       return data.data || data;
     },
   });
@@ -36,7 +36,7 @@ export function useLogin() {
 export function useLogout() {
   return useMutation({
     mutationFn: async () => {
-      const { data } = await api.post('/api/v1/auth/logout');
+      const { data } = await api.post('/api/auth/logout');
       return data.data || data;
     },
   });
@@ -45,7 +45,7 @@ export function useLogout() {
 export function useRegister() {
   return useMutation({
     mutationFn: async (payload: { email: string; password: string; name: string }) => {
-      const { data } = await api.post('/api/v1/auth/register', payload);
+      const { data } = await api.post('/api/auth/register', payload);
       return data.data || data;
     },
   });
@@ -54,7 +54,7 @@ export function useRegister() {
 export function useForgotPassword() {
   return useMutation({
     mutationFn: async (payload: { email: string }) => {
-      const { data } = await api.post('/api/v1/auth/forgot-password', payload);
+      const { data } = await api.post('/api/auth/forgot-password', payload);
       return data.data || data;
     },
   });
@@ -63,7 +63,7 @@ export function useForgotPassword() {
 export function useResetPassword() {
   return useMutation({
     mutationFn: async (payload: { token: string; newPassword: string }) => {
-      const { data } = await api.post('/api/v1/auth/reset-password', payload);
+      const { data } = await api.post('/api/auth/reset-password', payload);
       return data.data || data;
     },
   });
@@ -73,7 +73,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
-      const { data } = await api.get<AuthUser>('/api/v1/auth/me');
+      const { data } = await api.get<AuthUser>('/api/auth/me');
       return data.data || data;
     },
   });

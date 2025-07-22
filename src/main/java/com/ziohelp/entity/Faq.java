@@ -14,6 +14,7 @@ public class Faq {
     private Long id;
     private String question;
     private String answer;
+    private String category;
 
     @ManyToOne
     @JoinColumn(name = "organization_id")
