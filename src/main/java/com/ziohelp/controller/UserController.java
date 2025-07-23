@@ -41,11 +41,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'TENANT_ADMIN', 'DEVELOPER')") // All authenticated users except guest
     public ResponseEntity<UserDto> getCurrentUser() {
         User user = authService.getAuthenticatedUser();
-        UserDto dto = new UserDto();
-        dto.setName(user.getFullName());
-        dto.setEmail(user.getEmail());
-        dto.setRoles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(mapUserToDto(user));
     }
 
     @PutMapping("/me")
@@ -55,26 +51,36 @@ public class UserController {
         user.setFullName(dto.getName());
         user.setEmail(dto.getEmail());
         userRepository.save(user);
-        UserDto updatedDto = new UserDto();
-        updatedDto.setName(user.getFullName());
-        updatedDto.setEmail(user.getEmail());
-        return ResponseEntity.ok(updatedDto);
+        return ResponseEntity.ok(mapUserToDto(user));
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')") // Only admin or tenant admin can create users
-    public ResponseEntity<UserDto> createUser(@RequestBody UserDto dto, @RequestParam Long organizationId) {
-        com.ziohelp.entity.Organization org = organizationService.getOrganizationById(organizationId);
-        if (org == null) return ResponseEntity.badRequest().build();
-        User user = new User();
-        user.setFullName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setOrganization(org);
-        userRepository.save(user);
-        UserDto createdDto = new UserDto();
-        createdDto.setName(user.getFullName());
-        createdDto.setEmail(user.getEmail());
-        return ResponseEntity.ok(createdDto);
+    public ResponseEntity<?> createUser(@RequestBody UserDto dto, @RequestParam Long organizationId) {
+        try {
+            com.ziohelp.entity.Organization org = organizationService.getOrganizationById(organizationId);
+            if (org == null) return ResponseEntity.badRequest().body("Organization not found");
+            User user = new User();
+            user.setFullName(dto.getName());
+            user.setEmail(dto.getEmail());
+            user.setUsername(dto.getUsername());
+            user.setOrganization(org);
+            user.setActive(dto.isActive());
+            user.setApproved(dto.isApproved());
+            if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+                List<Role> roleEntities = roleRepository.findAll().stream()
+                    .filter(r -> dto.getRoles().contains(r.getName()))
+                    .collect(Collectors.toList());
+                user.setRoles(new java.util.HashSet<>(roleEntities));
+            }
+            if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+                user.setPassword(authService.encodePassword(dto.getPassword()));
+            }
+            userRepository.save(user);
+            return ResponseEntity.ok(mapUserToDto(user));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error creating user: " + e.getMessage());
+        }
     }
 
     @GetMapping("/by-org/{orgId}")
@@ -91,12 +97,7 @@ public class UserController {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<User> userPage = userRepository.findByOrganizationIdPaged(orgId, search.isEmpty() ? null : search, pageable);
-        List<UserDto> dtos = userPage.getContent().stream().map(u -> {
-            UserDto dto = new UserDto();
-            dto.setName(u.getFullName());
-            dto.setEmail(u.getEmail());
-            return dto;
-        }).collect(java.util.stream.Collectors.toList());
+        List<UserDto> dtos = userPage.getContent().stream().map(this::mapUserToDto).collect(java.util.stream.Collectors.toList());
         PageResponse<UserDto> response = new PageResponse<>(
             dtos,
             userPage.getNumber(),
@@ -138,13 +139,7 @@ public class UserController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage = userRepository.findAllPaged(search.isEmpty() ? null : search, pageable);
-        Page<UserDto> dtoPage = userPage.map(u -> {
-            UserDto dto = new UserDto();
-            dto.setName(u.getFullName());
-            dto.setEmail(u.getEmail());
-            dto.setRoles(u.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
-            return dto;
-        });
+        Page<UserDto> dtoPage = userPage.map(this::mapUserToDto);
         return ResponseEntity.ok(dtoPage);
     }
 
@@ -176,13 +171,7 @@ public class UserController {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<User> userPage = userRepository.findAllPaged(search.isEmpty() ? null : search, pageable);
-        List<UserDto> dtos = userPage.getContent().stream().map(u -> {
-            UserDto dto = new UserDto();
-            dto.setName(u.getFullName());
-            dto.setEmail(u.getEmail());
-            dto.setRoles(u.getRoles().stream().map(Role::getName).collect(java.util.stream.Collectors.toList()));
-            return dto;
-        }).collect(java.util.stream.Collectors.toList());
+        List<UserDto> dtos = userPage.getContent().stream().map(this::mapUserToDto).collect(java.util.stream.Collectors.toList());
         PageResponse<UserDto> response = new PageResponse<>(
             dtos,
             userPage.getNumber(),
@@ -204,28 +193,45 @@ public class UserController {
     @PutMapping("/{userId}/toggle-active")
     @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<?> toggleActive(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return ResponseEntity.status(404).body("User not found");
         user.setActive(!user.isActive());
         userRepository.save(user);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(mapUserToDto(user));
     }
 
     @PutMapping("/{userId}/approve-admin")
     @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<?> approveAdmin(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return ResponseEntity.status(404).body("User not found");
         user.setApproved(true);
         userRepository.save(user);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(mapUserToDto(user));
     }
 
     @PutMapping("/{userId}/reject-admin")
     @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<?> rejectAdmin(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return ResponseEntity.status(404).body("User not found");
         user.setApproved(false);
         userRepository.save(user);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(mapUserToDto(user));
+    }
+    // --- Utility: Map User to UserDto ---
+    private UserDto mapUserToDto(User user) {
+        if (user == null) return null;
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setName(user.getFullName());
+        dto.setEmail(user.getEmail());
+        dto.setRoles(user.getRoles() != null ? user.getRoles().stream().map(Role::getName).collect(Collectors.toList()) : null);
+        dto.setActive(user.isActive());
+        dto.setApproved(user.isApproved());
+        dto.setUsername(user.getUsername());
+        dto.setOrganizationId(user.getOrganization() != null ? user.getOrganization().getId() : null);
+        return dto;
     }
 
     @GetMapping("/roles")

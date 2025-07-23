@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/auth-context'
-import { authAPI } from '../../../services/api';
+import { authAPI } from '@/services/API';
 
 interface LoginFormData {
   email: string;
@@ -38,31 +39,42 @@ export const LoginForm = () => {
         return;
       }
 
-      // Use authAPI directly for login
-      const response = await authAPI.login({
-        email: loginMethod === 'email' ? data.email : undefined,
-        username: loginMethod === 'username' ? data.username : undefined,
-        password: data.password
-      });
-      
-      if (response.data.success) {
-        // Store auth token
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('userInfo', JSON.stringify(response.data.user));
-        
-        navigate('/dashboard');
+      // Build credentials object for backend
+      let credentials: { email?: string; username?: string; password: string } = { password: data.password };
+      if (loginMethod === 'email') {
+        credentials.email = data.email;
+      } else {
+        credentials.username = data.username;
+      }
+      const response = await authAPI.login(credentials);
+      // Accept login as successful if token or user is present in response
+      if (response.data.token || response.data.user) {
+        // Save token to localStorage for API auth
+        if (response.data.token) localStorage.setItem('authToken', response.data.token);
+        // Save roles to localStorage for navigation/authorization
+        let roles = response.data.roles || response.data.user?.roles;
+        if (!roles || !Array.isArray(roles) || roles.length === 0) {
+          roles = ['USER']; // fallback if roles missing
+        }
+        localStorage.setItem('userRoles', JSON.stringify(roles));
+        toast.success(response.data.message || 'Login successful!');
+        const { getDashboardRoute } = await import('../../../utils/getDashboardRoute');
+        navigate(getDashboardRoute(roles));
       } else {
         setLoginError(response.data.message || 'Login failed. Please try again.');
+        toast.error(response.data.message || 'Login failed. Please try again.');
       }
     } catch (error: any) {
-      setLoginError(error.response?.data?.message || 'An error occurred. Please try again.');
+      const msg = error.response?.data?.message || 'An error occurred. Please try again.';
+      setLoginError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-scree flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

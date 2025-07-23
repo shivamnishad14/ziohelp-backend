@@ -1,131 +1,59 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../services/api';
-
-// Types
-export interface KnowledgeBaseArticle {
-  id: number;
-  productId: number;
-  title: string;
-  content: string;
-  category: string;
-  author?: string;
-  isPublished?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface ArticleListResponse {
-  content: KnowledgeBaseArticle[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-  first: boolean;
-}
-
-// API base
-const API = '/api/v1/knowledge-base/articles';
-
-// List all articles (paginated)
-export function useListArticles(params: { productId: number; page?: number; size?: number; sort?: string }) {
-  return useQuery({
-    queryKey: ['kb-articles', params],
-    queryFn: async () => {
-      const { data } = await api.get<ArticleListResponse>(`${API}/list`, { params });
-      return data;
-    },
-  });
-}
-
-// Get article by ID
-export function useGetArticle(articleId: number) {
-  return useQuery({
-    queryKey: ['kb-article', articleId],
-    queryFn: async () => {
-      const { data } = await api.get<KnowledgeBaseArticle>(`${API}/${articleId}`);
-      return data;
-    },
-    enabled: !!articleId,
-  });
-}
-
-// Create new article
-export function useCreateArticle() {
+export const usePublishArticle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (article: Partial<KnowledgeBaseArticle>) => {
-      const { data } = await api.post(`${API}/create`, article);
-      return data;
+    mutationFn: async (id: number) => {
+      const response = await api.post(`/knowledge-base/articles/${id}/publish`);
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kb-articles'] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
     },
   });
-}
-
-// Update article
-export function useUpdateArticle() {
+};
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+export const useDeleteArticle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ articleId, article }: { articleId: number; article: Partial<KnowledgeBaseArticle> }) => {
-      const { data } = await api.put(`${API}/${articleId}/update`, article);
-      return data;
+    mutationFn: async (id: number) => {
+      await api.delete(`/knowledge-base/articles/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kb-articles'] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
     },
   });
-}
+};
+import { useQuery } from '@tanstack/react-query';
+import api from '@/services/API';
 
-// Publish/unpublish article
-export function usePublishArticle() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ articleId, published }: { articleId: number; published: boolean }) => {
-      const { data } = await api.put(`${API}/${articleId}/publish`, null, { params: { published } });
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kb-articles'] });
-    },
+export const useListArticles = (params?: { page?: number; size?: number }) =>
+  useQuery({
+    queryKey: ['articles', params],
+    queryFn: async () => (await api.get('/knowledge-base/articles', { params })).data,
   });
-}
 
-// Delete article
-export function useDeleteArticle() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (articleId: number) => {
-      const { data } = await api.delete(`${API}/${articleId}/delete`);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kb-articles'] });
-    },
-  });
-}
+export const useCreateArticle = () => {
+  // You can add useMutation logic here if needed
+  // Example:
+  // return useMutation((data: any) => api.post('/knowledge-base/articles', data));
+  return null;
+};
 
-// Search articles
-export function useSearchArticles(params: { productId: number; query: string; category?: string; page?: number; size?: number }) {
-  return useQuery({
-    queryKey: ['kb-articles-search', params],
-    queryFn: async () => {
-      const { data } = await api.get<ArticleListResponse>(`${API}/search`, { params });
-      return data;
-    },
-    enabled: !!params.query,
-  });
-}
+export const useUpdateArticle = () => {
+  // You can add useMutation logic here if needed
+  // Example:
+  // return useMutation(({ id, data }: { id: number; data: any }) => api.put(`/knowledge-base/articles/${id}`, data));
+  return null;
+};
 
-// Get article categories
-export function useArticleCategories(productId: number) {
-  return useQuery({
-    queryKey: ['kb-article-categories', productId],
-    queryFn: async () => {
-      const { data } = await api.get<string[]>(`${API}/categories`, { params: { productId } });
-      return data;
-    },
-    enabled: !!productId,
+export const useSearchArticles = (q: string) =>
+  useQuery({
+    queryKey: ['articles', 'search', q],
+    queryFn: async () => (await api.get('/knowledge-base/articles/search', { params: { q } })).data,
+    enabled: !!q,
   });
-} 
+
+export const useArticleCategories = () =>
+  useQuery({
+    queryKey: ['article-categories'],
+    queryFn: async () => (await api.get('/knowledge-base/categories')).data,
+  });

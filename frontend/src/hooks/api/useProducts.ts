@@ -1,96 +1,68 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/services/api';
+import { productAPI } from '@/services/API';
 
-export interface Product {
-  id: number;
-  name: string;
-  domain: string;
-  logoUrl?: string;
-  themeColor?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export function useListProducts(params?: { page?: number; size?: number; sort?: string }) {
-  return useQuery({
+export const useListProducts = (params?: { page?: number; size?: number }) =>
+  useQuery({
     queryKey: ['products', params],
-    queryFn: async () => {
-      const { data } = await api.get('/products/list', { params });
-      return data.data || data;
-    },
+    queryFn: () => productAPI.getAll(params),
   });
-}
 
-export function useGetProduct(productId: number) {
-  return useQuery({
-    queryKey: ['product', productId],
-    queryFn: async () => {
-      const { data } = await api.get(`/products/${productId}`);
-      return data.data || data;
-    },
-    enabled: !!productId,
+export const useSearchProducts = (q: string) =>
+  useQuery({
+    queryKey: ['products', 'search', q],
+    queryFn: async () => (await productAPI.getAll({ q })),
+    enabled: !!q,
   });
-}
 
-export function useCreateProduct() {
+
+export const useGetProduct = (id: number) =>
+  useQuery({
+    queryKey: ['product', id],
+    queryFn: () => productAPI.getById(id),
+    enabled: !!id,
+  });
+
+
+export const useCreateProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (product: Partial<Product>) => {
-      const { data } = await api.post('/products/create', product);
-      return data.data || data;
-    },
+    mutationFn: productAPI.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
-}
+};
 
-export function useUpdateProduct() {
+
+export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, product }: { productId: number; product: Partial<Product> }) => {
-      const { data } = await api.put(`/products/${productId}/update`, product);
-      return data.data || data;
-    },
+    mutationFn: ({ id, data }: { id: number; data: any }) => productAPI.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
-}
+};
 
-export function useUpdateProductStatus() {
+
+export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, status }: { productId: number; status: string }) => {
-      const { data } = await api.put(`/products/${productId}/status`, { status });
-      return data.data || data;
-    },
+    mutationFn: (id: number) => productAPI.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
-}
+};
 
-export function useDeleteProduct() {
+
+export const useUpdateProductStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (productId: number) => {
-      const { data } = await api.delete(`/products/${productId}/delete`);
-      return data.data || data;
-    },
+    mutationFn: ({ id, status }: { id: number; status: string }) => productAPI.updateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
-}
-
-export function useSearchProducts(params: { query: string; category?: string; page?: number; size?: number }) {
-  return useQuery({
-    queryKey: ['products-search', params],
-    queryFn: async () => {
-      const { data } = await api.get('/products/search', { params });
-      return data.data || data;
-    },
-    enabled: !!params.query,
-  });
-} 
+};

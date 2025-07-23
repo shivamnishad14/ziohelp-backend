@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { useAuth } from '@/hooks/api/useAuth';
 import { hasRole } from '@/utils/roleChecker';
 
 interface ProtectedRouteProps {
@@ -11,21 +11,25 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole, roles }) => {
   const location = useLocation();
-  const isAuthenticated = authAPI.isAuthenticated();
-  const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
-  console.log('userRoles:', userRoles);
-
+  const { isAuthenticated } = useAuth();
+  let userRoles: string[] = [];
+  try {
+    userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+  } catch {
+    userRoles = [];
+  }
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
+  // If roles prop is set, require at least one match
   if (roles && roles.length > 0 && !roles.some(r => userRoles.includes(r))) {
     return <Navigate to="/unauthorized" replace />;
   }
+  // If requiredRole prop is set, require that role
   if (requiredRole && !userRoles.includes(requiredRole)) {
     return <Navigate to="/unauthorized" replace />;
   }
-
   return <>{children}</>;
 };
 

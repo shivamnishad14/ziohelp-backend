@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { roleAPI } from '@/services/api';
+import { useRoles, useCreateRole, useUpdateRole, useDeleteRole } from '@/hooks/api/useRoleQueries';
 import { Role } from '@/types';
 import { Plus, Edit, Trash2, Search, Filter, MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -19,14 +19,11 @@ interface RoleManagementProps {
   className?: string;
 }
 
+
 export default function RoleManagement({ className }: RoleManagementProps) {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -36,108 +33,119 @@ export default function RoleManagement({ className }: RoleManagementProps) {
     name: '',
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [lastApiResponse, setLastApiResponse] = useState<any>(null); // For debugging
 
-  // Load roles on component mount
-  useEffect(() => {
-    loadRoles();
-  }, [currentPage, pageSize, searchQuery, filterStatus]);
+  // Use React Query hook to fetch roles
+  const {
+    data: rolesData,
+    isLoading: loading,
+    isError,
+    error: apiError,
+    refetch: refetchRoles,
+  } = useRoles({
+    page: currentPage,
+    size: pageSize,
+    search: searchQuery,
+    filter: filterStatus,
+  });
 
-  const loadRoles = async () => {
-    try {
-      setLoading(true);
-      setApiError(null);
-      const response = await roleAPI.getAll({
-        page: currentPage,
-        size: pageSize,
-        sort: 'name,asc',
-      });
-      console.log('API response:', response.data); // Debug log
-      setLastApiResponse(response.data); // Save for debugging
-      // Fix: roles are in response.data.data.content
-      const apiData = response.data.data ? response.data.data : response.data;
-      const content = apiData.content || [];
-      setRoles(content);
-      setTotalPages(apiData.totalPages || 0);
-      setTotalElements(apiData.totalElements || 0);
-    } catch (error: any) {
-      setApiError(error.response?.data?.message || error.message || 'Unknown error');
-      toast.error('Failed to load roles: ' + (error.response?.data?.message || error.message));
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Extract roles, pagination, and total count from query result
+  const roles = rolesData?.content || [];
+  const totalPages = rolesData?.totalPages || 0;
+  const totalElements = rolesData?.totalElements || 0;
+  const lastApiResponse = rolesData || null;
 
+
+  // React Query mutation hooks
+  const createRoleMutation = useCreateRole();
+  const updateRoleMutation = useUpdateRole();
+  const deleteRoleMutation = useDeleteRole();
+
+  // Create Role handler
   const handleCreateRole = async () => {
+    // Validate form
+    const errors: Record<string, string> = {};
+    if (!formData.name.trim()) {
+      errors.name = 'Role name is required';
+    } else if (formData.name.length < 2) {
+      errors.name = 'Role name must be at least 2 characters';
+    } else if (formData.name.length > 50) {
+      errors.name = 'Role name must be less than 50 characters';
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
     try {
-      // Validate form
-      const errors: Record<string, string> = {};
-      if (!formData.name.trim()) {
-        errors.name = 'Role name is required';
-      } else if (formData.name.length < 2) {
-        errors.name = 'Role name must be at least 2 characters';
-      } else if (formData.name.length > 50) {
-        errors.name = 'Role name must be less than 50 characters';
-      }
-
-      if (Object.keys(errors).length > 0) {
-        setFormErrors(errors);
-        return;
-      }
-
-      await roleAPI.create(formData);
+      await createRoleMutation.mutateAsync(formData);
       toast.success('Role created successfully');
       setIsCreateDialogOpen(false);
       resetForm();
-      loadRoles();
+      refetchRoles();
     } catch (error: any) {
+      if (error.response?.data?.errors) {
+        setFormErrors(error.response.data.errors);
+      } else if (error.response?.data?.message) {
+        setFormErrors({ name: error.response.data.message });
+      } else {
+        setFormErrors({ name: error.message || 'Unknown error' });
+      }
       toast.error('Failed to create role: ' + (error.response?.data?.message || error.message));
     }
   };
 
+  // Update Role handler
   const handleUpdateRole = async () => {
     if (!editingRole) return;
-
+    // Validate form
+    const errors: Record<string, string> = {};
+    if (!formData.name.trim()) {
+      errors.name = 'Role name is required';
+    } else if (formData.name.length < 2) {
+      errors.name = 'Role name must be at least 2 characters';
+    } else if (formData.name.length > 50) {
+      errors.name = 'Role name must be less than 50 characters';
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
     try {
-      // Validate form
-      const errors: Record<string, string> = {};
-      if (!formData.name.trim()) {
-        errors.name = 'Role name is required';
-      } else if (formData.name.length < 2) {
-        errors.name = 'Role name must be at least 2 characters';
-      } else if (formData.name.length > 50) {
-        errors.name = 'Role name must be less than 50 characters';
-      }
-
-      if (Object.keys(errors).length > 0) {
-        setFormErrors(errors);
-        return;
-      }
-
-      await roleAPI.update(editingRole.id, formData);
+      await updateRoleMutation.mutateAsync({ id: editingRole.id, data: formData });
       toast.success('Role updated successfully');
       setIsEditDialogOpen(false);
       setEditingRole(null);
       resetForm();
-      loadRoles();
+      refetchRoles();
     } catch (error: any) {
+      if (error.response?.data?.errors) {
+        setFormErrors(error.response.data.errors);
+      } else if (error.response?.data?.message) {
+        setFormErrors({ name: error.response.data.message });
+      } else {
+        setFormErrors({ name: error.message || 'Unknown error' });
+      }
       toast.error('Failed to update role: ' + (error.response?.data?.message || error.message));
     }
   };
 
+  // Delete Role handler
   const handleDeleteRole = async () => {
     if (!deletingRole) return;
-
     try {
-      await roleAPI.delete(deletingRole.id);
+      await deleteRoleMutation.mutateAsync(deletingRole.id);
       toast.success('Role deleted successfully');
       setDeletingRole(null);
-      loadRoles();
+      refetchRoles();
     } catch (error: any) {
-      toast.error('Failed to delete role: ' + (error.response?.data?.message || error.message));
+      let msg = error.response?.data?.message || error.message;
+      if (msg?.toLowerCase().includes('constraint')) {
+        msg = 'Cannot delete role: it is assigned to one or more users.';
+      }
+      toast.error('Failed to delete role: ' + msg);
     }
   };
+
+  // Duplicate handler functions removed. Only the first set of handleCreateRole, handleUpdateRole, and handleDeleteRole remain.
 
   const openEditDialog = (role: Role) => {
     setEditingRole(role);
@@ -156,7 +164,6 @@ export default function RoleManagement({ className }: RoleManagementProps) {
     const matchesFilter = filterStatus === 'all' || 
       (filterStatus === 'with-users' && role.userCount > 0) ||
       (filterStatus === 'no-users' && role.userCount === 0);
-    
     return matchesSearch && matchesFilter;
   });
 

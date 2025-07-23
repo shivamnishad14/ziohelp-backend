@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ticketAPI, userAPI } from '@/services/api';
+import { ticketAPI, userAPI } from '@/services/API';
 import { Search, Filter, Eye, MessageSquare, Clock, User } from 'lucide-react';
 import { Ticket, TicketStatus, TicketPriority, TicketCategory } from '@/types';
 

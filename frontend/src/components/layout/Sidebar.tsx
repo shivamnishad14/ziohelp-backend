@@ -15,7 +15,7 @@ import {
   Shield
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { authAPI } from '../../services/api';
+import { authAPI } from '@/services/API';
 
 type Role = 'ADMIN' | 'DEVELOPER' | 'USER' | 'GUEST' | 'TENANT_ADMIN';
 interface NavigationItem {

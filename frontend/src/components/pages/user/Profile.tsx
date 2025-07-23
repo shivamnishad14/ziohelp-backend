@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { authAPI } from '@/services/api';
+import { authAPI } from '@/services/API';
 import { toast } from 'sonner';
 
 export default function Profile() {

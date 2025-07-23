@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI } from '@/services/API';
 
 interface User {
   id: number;
@@ -26,37 +26,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check for existing auth on mount
-    const checkAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        try {
-          const userData = await authAPI.getCurrentUser();
-          setUser(userData.data);
-          setIsAuthenticated(true);
-        } catch (error) {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userInfo');
-        }
-      }
-      setIsLoading(false);
-    };
-    checkAuth();
+    // No localStorage token check; rely on in-memory state
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await authAPI.login(email, password);
-    const { token, user } = response.data;
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userInfo', JSON.stringify(user));
+    const response = await authAPI.login({ email, password });
+    const { user } = response.data;
     setUser(user);
     setIsAuthenticated(true);
   };
 
   const logout = async () => {
     await authAPI.logout();
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userInfo');
     setUser(null);
     setIsAuthenticated(false);
   };

@@ -7,14 +7,20 @@ export interface Role {
 }
 
 export interface User {
-  id: string;
-  email: string;
+  id?: string;
   name: string;
-  role: 'admin' | 'product_admin' | 'user';
+  email: string;
+  roles: string[];
   avatar?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+  active?: boolean;
+  approved?: boolean;
+  username?: string;
+  organizationId?: string;
+  password?: string;
 }
+
 
 export interface Product {
   id: string;

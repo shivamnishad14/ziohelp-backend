@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ticketAPI } from '../../../services/api';
+import { ticketAPI } from '@/services/API';
 
 
 const MyTickets: React.FC = () => {

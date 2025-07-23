@@ -1,17 +1,62 @@
+// Role API for role endpoints
+export const roleAPI = {
+  getAll: async () => {
+    const response = await api.get('/admin/roles');
+    return response.data;
+  },
+  create: async (data: any) => {
+    const response = await api.post('/admin/roles', data);
+    return response.data;
+  },
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/admin/roles/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    const response = await api.delete(`/admin/roles/${id}`);
+    return response.data;
+  },
+};
+// Product API for product endpoints
+export const productAPI = {
+  getAll: async (params?: any) => {
+    const response = await api.get('/admin/products', { params });
+    return response.data;
+  },
+  getById: async (id: number) => {
+    const response = await api.get(`/admin/products/${id}`);
+    return response.data;
+  },
+  create: async (data: any) => {
+    const response = await api.post('/admin/products', data);
+    return response.data;
+  },
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/admin/products/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    const response = await api.delete(`/admin/products/${id}`);
+    return response.data;
+  },
+  updateStatus: async (id: number, status: string) => {
+    const response = await api.patch(`/admin/products/${id}/status`, { status });
+    return response.data;
+  },
+};
+
+
 import axios from 'axios';
-import { Product, User, Ticket, KnowledgeBaseArticle, Role } from '../types';
-import { toast } from 'sonner';
 
 // Create axios instance
 const api = axios.create({
-  // baseURL: 'http://localhost:8080/api/v1',
-  baseURL: 'http://localhost:8080/api/',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor to add auth token
+// Add request interceptor for authentication
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   if (token) {
@@ -20,314 +65,84 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for error handling
+// Add response interceptor for error handling
 api.interceptors.response.use(
-  (response) => {
-    // Handle successful login response
-    if (response.config.url?.includes('/auth/login') && response.data.success) {
-      const { token, role, user } = response.data.data;
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userRole', role);
-      localStorage.setItem('userInfo', JSON.stringify(user));
-    }
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
+      // Handle unauthorized access - clear token and redirect to login
       localStorage.removeItem('authToken');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userInfo');
       localStorage.removeItem('userRoles');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
 );
 
-// Authentication API
+export default api;
+
+// Auth API for authentication endpoints
 export const authAPI = {
-  login: async (credentials: { email?: string; username?: string; password: string }) => {
-    try {
-      const res = await api.post('/auth/login', credentials);
-      toast.success('Login successful!');
-      // Check for ADMIN role in response
-      const roles = res.data.roles || res.data.data?.roles || [];
-      localStorage.setItem('userRoles', JSON.stringify(roles));
-      if (roles.includes('ADMIN')) {
-        window.location.href = '/master-admin/dashboard';
-      } else if (roles.includes('TENANT_ADMIN')) {
-        window.location.href = '/tenant-admin/dashboard';
-      } else if (roles.includes('DEVELOPER')) {
-        window.location.href = '/developer/dashboard';
-      } else if (roles.includes('USER')) {
-        window.location.href = '/dashboard';
-      } else if (roles.includes('GUEST')) {
-        window.location.href = '/guest/dashboard';
-      } else {
-        window.location.href = '/dashboard'; // fallback
-      }
-      return res;
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Login failed');
-      throw err;
-    }
+  login: async (credentials: { username: string; password: string }) => {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
   },
-  logout: () => 
-    api.post('/auth/logout'),
-  getCurrentUser: () => 
-    api.get('/auth/me'),
-  register: (name: string, email: string, password: string) =>
-    api.post('/auth/register', { name, email, password }),
-  forgotPassword: (email: string) =>
-    api.post('/auth/forgot-password', { email }),
-  resetPassword: (token: string, password: string) =>
-    api.post('/auth/reset-password', { token, password }),
-  updateProfile: (data: { name?: string; email?: string }) => api.put('/auth/profile', data),
-  // Helper methods
-  isAuthenticated: () => {
-    return !!localStorage.getItem('authToken');
+  logout: async () => {
+    const response = await api.post('/auth/logout');
+    return response.data;
   },
-  hasRole: (role: string) => {
-    const userRole = localStorage.getItem('userRole');
-    return userRole === role;
+  getCurrentUser: async () => {
+    const response = await api.get('/auth/me');
+    return response.data;
   },
-  clearAuth: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('userRoles');
-  }
 };
 
-// Product API
-export const productAPI = {
-  getAll: (pageable?: any) => 
-    api.get<{ content: Product[], totalElements: number, totalPages: number }>('/products/list', { params: pageable }),
-  getById: (id: string) => 
-    api.get<Product>(`/products/${id}`),
-  create: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => 
-    api.post<Product>('/products/create', product),
-  update: (id: string, product: Partial<Product>) => 
-    api.put<Product>(`/products/${id}/update`, product),
-  delete: (id: string) => 
-    api.delete(`/products/${id}/delete`),
-  search: (query?: string, category?: string, pageable?: any) => 
-    api.get<{ content: Product[], totalElements: number, totalPages: number }>('/products/search', { 
-      params: { query, category, ...pageable } 
-    }),
-  updateStatus: (id: string, status: string) => 
-    api.put<Product>(`/products/${id}/status`, null, { params: { status } }),
-};
-
-// User API
-export const userAPI = {
-  getAll: (params?: { page?: number; size?: number; search?: string; sortBy?: string; sortDir?: string }) => 
-    api.get<{ content: User[]; page: number; size: number; totalElements: number; totalPages: number; last: boolean }>('/users/all', { 
-      params 
-    }),
-  getById: (id: string) => 
-    api.get<User>(`/users/${id}`),
-  create: (productId: string, user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => 
-    api.post<User>('/users/create', user, { params: { productId } }),
-  update: (id: string, user: Partial<User>) => 
-    api.put<User>(`/users/${id}/update`, user),
-  delete: (id: string) => 
-    api.delete(`/users/${id}/delete`),
-  search: (productId: string, query?: string, role?: string, pageable?: any) => 
-    api.get<{ content: User[], totalElements: number, totalPages: number }>('/users/search', { 
-      params: { productId, query, role, ...pageable } 
-    }),
-  updateRole: (id: string, role: string) => 
-    api.put<User>(`/users/${id}/role`, null, { params: { role } }),
-  getPendingAdmins: () => api.get('/users/pending-admins'),
-  approveAdmin: (id: string) => api.post(`/users/approve-admin/${id}`),
-  rejectAdmin: (id: string) => api.post(`/users/reject-admin/${id}`),
-  toggleActive: (id: string) => api.post(`/users/toggle-active/${id}`),
-};
-
-// Ticket API
+// Ticket API for ticket endpoints
 export const ticketAPI = {
-  getAll: (params?: { page?: number; size?: number; status?: string; search?: string; sortBy?: string; sortDir?: string }) => 
-    api.get<{ content: Ticket[]; page: number; size: number; totalElements: number; totalPages: number; last: boolean }>('/tickets', { 
-      params 
-    }),
-  getById: (id: string) => 
-    api.get<Ticket>(`/tickets/${id}`),
-  create: (productId: string, userId: string, ticket: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>) => 
-    api.post<Ticket>('/tickets/create', ticket, { params: { productId, userId } }),
-  update: (id: string, ticket: Partial<Ticket>) => 
-    api.put<Ticket>(`/tickets/${id}/update`, ticket),
-  delete: (id: string) => 
-    api.delete(`/tickets/${id}/delete`),
-  addComment: (ticketId: string, userId: string, comment: { content: string }) => 
-    api.post(`/tickets/${ticketId}/comments/add`, comment, { params: { userId } }),
-  getComments: (ticketId: string, pageable?: any) => 
-    api.get<{ content: any[], totalElements: number, totalPages: number }>(`/tickets/${ticketId}/comments`, { 
-      params: pageable 
-    }),
-  updateStatus: (ticketId: string, status: string) => 
-    api.put<Ticket>(`/tickets/${ticketId}/status`, null, { params: { status } }),
-  search: (productId: string, query?: string, status?: string, pageable?: any) => 
-    api.get<{ content: Ticket[], totalElements: number, totalPages: number }>('/tickets/search', { 
-      params: { productId, query, status, ...pageable } 
-    }),
-  publicCreate: (data: { email: string; subject: string; description: string; priority: string; productId: string }) =>
-    api.post('/tickets/public-create', data),
-};
-
-// Knowledge Base API
-export const knowledgeBaseAPI = {
-  getAll: (productId: string, pageable?: any) => 
-    api.get<{ content: KnowledgeBaseArticle[], totalElements: number, totalPages: number }>('/knowledge-base/articles/list', { 
-      params: { productId, ...pageable } 
-    }),
-  getById: (id: string) => 
-    api.get<KnowledgeBaseArticle>(`/knowledge-base/articles/${id}`),
-  create: (article: Omit<KnowledgeBaseArticle, 'id' | 'createdAt' | 'updatedAt'>) => 
-    api.post<KnowledgeBaseArticle>('/knowledge-base/articles/create', article),
-  update: (id: string, article: Partial<KnowledgeBaseArticle>) => 
-    api.put<KnowledgeBaseArticle>(`/knowledge-base/articles/${id}/update`, article),
-  delete: (id: string) => 
-    api.delete(`/knowledge-base/articles/${id}/delete`),
-  search: (productId: string, query: string, category?: string, pageable?: any) => 
-    api.get<{ content: KnowledgeBaseArticle[], totalElements: number, totalPages: number }>('/knowledge-base/articles/search', { 
-      params: { productId, query, category, ...pageable } 
-    }),
-  getCategories: (productId: string) => 
-    api.get<string[]>(`/knowledge-base/articles/categories`, { params: { productId } }),
-  publish: (articleId: string, published: boolean) => 
-    api.put<KnowledgeBaseArticle>(`/knowledge-base/articles/${articleId}/publish`, null, { 
-      params: { published } 
-    }),
-};
-
-// Role API
-export const roleAPI = {
-  getAll: (pageable?: any) => {
-    // Convert legacy sort format to new format
-    const params = { ...pageable };
-    if (params.sort) {
-      const [sortBy, sortDirection] = params.sort.split(',');
-      params.sortBy = sortBy || 'name';
-      params.sortDirection = sortDirection || 'asc';
-      delete params.sort;
-    }
-    return api.get<{
-      data: any; content: Role[], totalElements: number, totalPages: number 
-}>('/roles/list', { params });
+  getAll: async (params: any) => {
+    const response = await api.get('/tickets', { params });
+    return response.data;
   },
-  getAllList: () => 
-    api.get<Role[]>('/roles/all'),
-  getById: (id: string) => 
-    api.get<Role>(`/roles/${id}`),
-  getByName: (name: string) => 
-    api.get<Role>(`/roles/name/${name}`),
-  create: (role: Omit<Role, 'id' | 'createdAt' | 'updatedAt' | 'userCount'>) => 
-    api.post<Role>('/roles/create', role),
-  update: (id: string, role: Partial<Role>) => 
-    api.put<Role>(`/roles/${id}/update`, role),
-  delete: (id: string) => 
-    api.delete(`/roles/${id}/delete`),
-  checkNameExists: (name: string) => 
-    api.get<boolean>(`/roles/check-name/${name}`),
-  checkIdExists: (id: string) => 
-    api.get<boolean>(`/roles/check-id/${id}`),
-  search: (searchRequest: any) => 
-    api.post<{ content: Role[], totalElements: number, totalPages: number }>('/roles/search', searchRequest),
-  getCount: () => 
-    api.get<number>('/roles/count'),
-};
-
-// AI API
-export const aiAPI = {
-  ask: (question: string, productId: string) => 
-    api.post('/ai/ask', null, { params: { question, productId } }),
-  analyzeTicket: (ticketId: string, productId: string) => 
-    api.post('/ai/analyze-ticket', null, { params: { ticketId, productId } }),
-  generateResponse: (ticketId: string, productId: string, responseType: string) => 
-    api.post('/ai/generate-response', null, { params: { ticketId, productId, responseType } }),
-  searchKnowledge: (query: string, productId: string) => 
-    api.post('/ai/search-knowledge', null, { params: { query, productId } }),
-  getStatus: () => 
-    api.get('/ai/status'),
-};
-
-// File API
-export const fileAPI = {
-  upload: (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post('/files/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  getById: async (id: number) => {
+    const response = await api.get(`/tickets/${id}`);
+    return response.data;
   },
-  download: (filename: string) => 
-    api.get(`/files/download/${filename}`, { responseType: 'blob' }),
-  getInfo: (filename: string) => 
-    api.get(`/files/${filename}`),
-  delete: (filename: string) => 
-    api.delete(`/files/${filename}/delete`),
-  list: () => 
-    api.get('/files/list'),
+  create: async (data: any) => {
+    const response = await api.post('/tickets', data);
+    return response.data;
+  },
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/tickets/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    const response = await api.delete(`/tickets/${id}`);
+    return response.data;
+  },
 };
 
-// Organization API
-export const organizationAPI = {
-  getAll: (params?: { page?: number; size?: number; search?: string; sortBy?: string; sortDir?: string }) => 
-    api.get<{ content: any[]; page: number; size: number; totalElements: number; totalPages: number; last: boolean }>('/organizations', { 
-      params 
-    }),
-  // Add more methods as needed
+// User API for user endpoints
+export const userAPI = {
+  getAll: async (params: any) => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+  getById: async (id: number) => {
+    const response = await api.get(`/admin/users/${id}`);
+    return response.data;
+  },
+  create: async (data: any) => {
+    const response = await api.post('/admin/users', data);
+    return response.data;
+  },
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/admin/users/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    const response = await api.delete(`/admin/users/${id}`);
+    return response.data;
+  },
 };
-
-// Notification API
-export const notificationAPI = {
-  send: (message: string) => api.post('/notifications/send', message, {
-    headers: { 'Content-Type': 'application/json' },
-  }),
-  getByOrganization: (orgId: string | number) => api.get(`/notifications/by-org/${orgId}`),
-};
-
-// FAQ API
-export const faqAPI = {
-  getAll: (params?: { search?: string; page?: number; size?: number; sortBy?: string; sortDir?: string }) =>
-    api.get('/faq', { params }),
-  getById: (id: string | number) =>
-    api.get(`/faq/${id}`),
-  update: (id: string | number, faq: { question: string; answer: string }) =>
-    api.put(`/faq/${id}`, faq),
-  delete: (id: string | number) =>
-    api.delete(`/faq/${id}`),
-  getByCategory: (category: string) =>
-    api.get(`/faq/by-category/${category}`),
-  getCategories: () =>
-    api.get('/faq/categories'),
-  create: (faq: { question: string; answer: string; organization_id?: number }) =>
-    api.post('/faq', faq),
-  getByProduct: (productId: string | number) =>
-    api.get(`/faq/by-product/${productId}`),
-  search: (query: string) =>
-    api.get('/faq/search', { params: { query } }),
-};
-
-// Dashboard API
-export const dashboardAPI = {
-  getStats: (params?: { startDate?: string; endDate?: string }) =>
-    api.get('/v1/dashboard/stats', { params }),
-};
-
-// AuditLog API
-export const auditLogAPI = {
-  getByOrganization: (orgId: string | number) => api.get(`/audit-logs/by-org/${orgId}`),
-};
-
-// GuestTicket API
-export const guestTicketAPI = {
-  submit: (ticket: any) => api.post('/tickets/guest', ticket),
-  getStatus: (id: string | number, email: string) => api.get(`/tickets/guest/${id}/${email}`),
-};
-
-export default api; 
