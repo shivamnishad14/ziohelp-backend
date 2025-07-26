@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import com.ziohelp.dto.LoginRequest;
 import com.ziohelp.dto.LoginResponse;
 import com.ziohelp.dto.RegisterRequest;
+import com.ziohelp.dto.UserDto;
 import com.ziohelp.entity.Role;
 import com.ziohelp.entity.User;
 import com.ziohelp.repository.RoleRepository;
@@ -144,17 +145,26 @@ public class AuthController {
                 // Generate token
                 String token = jwtTokenProvider.generateToken(authentication);
                 System.out.println("Token generated successfully");
-                // Create response
+                
+                // Create response with enhanced structure
                 LoginResponse response = new LoginResponse();
-                response.setToken(token);
+                response.setAccessToken(token);  // Changed from setToken to setAccessToken
+                response.setRefreshToken(token); // For now, using same token as refresh
                 response.setUserId(user.getId());
                 response.setEmail(user.getEmail());
+                response.setUsername(user.getUsername());
                 response.setFullName(user.getFullName());
+                response.setExpiresIn(86400); // 24 hours in seconds
+                
                 // Get roles
                 List<String> roles = user.getRoles() != null ?
                     user.getRoles().stream().map(Role::getName).collect(Collectors.toList()) :
                     Collections.singletonList("USER");
                 response.setRoles(roles);
+                
+                // Add user object
+                response.setUser(UserDto.fromUser(user));
+                
                 System.out.println("Login successful for: " + request.getEmail() + " with roles: " + roles);
                 return ResponseEntity.ok(response);
             } catch (Exception authEx) {
@@ -288,4 +298,74 @@ public class AuthController {
         // No server-side session to invalidate (JWT is stateless)
         return ResponseEntity.ok("Logged out successfully");
     }
-} 
+
+    @Operation(
+        summary = "Get current user",
+        description = "Get current authenticated user information"
+    )
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        try {
+            // Extract token from Authorization header
+            String token = authHeader.replace("Bearer ", "");
+            String email = jwtTokenProvider.getEmailFromToken(token);
+            
+            Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(401).body("User not found");
+            }
+            
+            User user = userOpt.get();
+            UserDto userDto = UserDto.fromUser(user);
+            
+            return ResponseEntity.ok(userDto);
+        } catch (Exception e) {
+            logger.error("Error getting current user: {}", e.getMessage());
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+    }
+
+    @Operation(
+        summary = "Refresh token",
+        description = "Refresh JWT token"
+    )
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
+        try {
+            String refreshToken = body.get("refreshToken");
+            if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+                return ResponseEntity.status(401).body("Invalid refresh token");
+            }
+            
+            String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+            Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(401).body("User not found");
+            }
+            
+            User user = userOpt.get();
+            String newToken = jwtTokenProvider.generateTokenFromEmail(email);
+            
+            LoginResponse response = new LoginResponse();
+            response.setAccessToken(newToken);
+            response.setRefreshToken(newToken);
+            response.setUserId(user.getId());
+            response.setEmail(user.getEmail());
+            response.setUsername(user.getUsername());
+            response.setFullName(user.getFullName());
+            response.setExpiresIn(86400);
+            
+            List<String> roles = user.getRoles() != null ?
+                user.getRoles().stream().map(Role::getName).collect(Collectors.toList()) :
+                Collections.singletonList("USER");
+            response.setRoles(roles);
+            response.setUser(UserDto.fromUser(user));
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error refreshing token: {}", e.getMessage());
+            return ResponseEntity.status(401).body("Token refresh failed");
+        }
+    }
+}

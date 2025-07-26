@@ -65,8 +65,9 @@ public class UserController {
             user.setEmail(dto.getEmail());
             user.setUsername(dto.getUsername());
             user.setOrganization(org);
-            user.setActive(dto.isActive());
+            user.setActive(dto.getIsActive());
             user.setApproved(dto.isApproved());
+            user.setId(dto.getId()); // Ensure id is handled as String instead of Long.
             if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
                 List<Role> roleEntities = roleRepository.findAll().stream()
                     .filter(r -> dto.getRoles().contains(r.getName()))
@@ -254,4 +255,4 @@ public class UserController {
     public ResponseEntity<Long> userCount() {
         return ResponseEntity.ok(userRepository.count());
     }
-} 
+}

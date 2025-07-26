@@ -39,7 +39,7 @@ export interface RegisterRequest {
 }
 
 // User Types
-export type UserRole = 'USER' | 'AGENT' | 'ADMIN' | 'MASTER_ADMIN';
+export type UserRole = 'USER' | 'AGENT' | 'ADMIN' | 'MASTER_ADMIN' | 'DEVELOPER';
 
 export interface User {
   id: string;
@@ -241,6 +241,71 @@ export interface AgentStats {
   resolvedTickets: number;
   avgResolutionTime: number;
   customerRating: number;
+}
+
+// Dashboard Response Types
+export interface BaseDashboardResponse {
+  welcomeMessage: string;
+  userInfo: {
+    id: string;
+    email: string;
+    fullName: string;
+    roles: string[];
+  };
+  features: string[];
+}
+
+export interface UserDashboardResponse extends BaseDashboardResponse {
+  metrics: {
+    myTickets: number;
+    openTickets: number;
+    resolvedTickets: number;
+    pendingTickets: number;
+  };
+}
+
+export interface AgentDashboardResponse extends BaseDashboardResponse {
+  metrics: {
+    assignedTickets: number;
+    totalTickets: number;
+    openTickets: number;
+    inProgressTickets: number;
+    resolvedToday: number;
+  };
+}
+
+export interface AdminDashboardResponse extends BaseDashboardResponse {
+  metrics: {
+    totalUsers: number;
+    activeUsers: number;
+    pendingApprovals: number;
+    totalTickets: number;
+    openTickets: number;
+    resolvedTickets: number;
+    resolutionRate: number;
+  };
+}
+
+export interface MasterAdminDashboardResponse extends BaseDashboardResponse {
+  metrics: {
+    totalUsers: number;
+    totalOrganizations: number;
+    totalTickets: number;
+    systemHealth: number;
+    activeAgents: number;
+    activeAdmins: number;
+  };
+}
+
+export interface DeveloperDashboardResponse extends BaseDashboardResponse {
+  metrics: {
+    totalBugs: number;
+    activeTasks: number;
+    codeReviews: number;
+    deployments: number;
+    systemUptime: number;
+    apiCalls: number;
+  };
 }
 
 // Search & Filter Types
