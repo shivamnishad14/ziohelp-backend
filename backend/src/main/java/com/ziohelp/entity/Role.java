@@ -2,8 +2,10 @@ package com.ziohelp.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
+@Table(name = "roles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,10 +15,7 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @NotBlank(message = "Role name is required")
+    @Column(unique = true, nullable = false)
     private String name;
-
-    public String getName() { return name; }
-
-    public void setName(String name) { this.name = name; }
 } 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from '@tanstack/react-router';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
@@ -15,7 +15,7 @@ import {
   Shield
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { authAPI } from '@/services/API';
+import { authAPI } from '../../services/api';
 
 type Role = 'ADMIN' | 'DEVELOPER' | 'USER' | 'GUEST' | 'TENANT_ADMIN';
 interface NavigationItem {

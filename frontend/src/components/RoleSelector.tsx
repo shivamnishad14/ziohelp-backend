@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { roleAPI } from '@/services/API';
+import { roleAPI } from '@/services/api';
 import { Role } from '@/types';
 import { toast } from 'sonner';
 

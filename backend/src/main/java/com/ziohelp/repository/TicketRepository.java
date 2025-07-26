@@ -50,17 +50,4 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.organization.id = :organizationId AND t.status = :status AND t.createdAt BETWEEN :start AND :end")
     long countByOrganizationIdAndStatusAndCreatedAtBetween(@Param("organizationId") Long organizationId, @Param("status") String status, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-    
-    // Dashboard-specific queries
-    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.createdBy = :email")
-    long countByCreatedByEmail(@Param("email") String email);
-    
-    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.createdBy = :email AND t.status = :status")
-    long countByCreatedByEmailAndStatus(@Param("email") String email, @Param("status") String status);
-    
-    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.assignedTo.email = :email")
-    long countByAssignedToEmail(@Param("email") String email);
-    
-    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.assignedTo.email = :email AND t.status = :status")
-    long countByAssignedToEmailAndStatus(@Param("email") String email, @Param("status") String status);
 } 

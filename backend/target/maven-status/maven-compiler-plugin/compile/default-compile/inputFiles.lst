@@ -7,7 +7,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\No
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\AuditLogRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\config\CorsConfig.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\UserController.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\security\TestPassword.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\EnhancedDashboardController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\AIChatController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\LoginRequest.java
@@ -18,6 +17,7 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Att
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\RegisterRequest.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\LoginResponse.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\security\SecurityConfig.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\OrganizationDto.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\DashboardService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\GeminiService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\NotificationController.java
@@ -25,7 +25,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Aud
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\FileInfoRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Ticket.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\config\WebSocketConfig.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\HashTest.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\AttachmentRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\CommentRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\TicketService.java
@@ -52,7 +51,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Use
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\KnowledgeBaseArticleRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\FileController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\EmailService.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\AccessControlService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\TicketHistory.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\RoleRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\AuthService.java

@@ -145,7 +145,95 @@ export default function RoleManagement({ className }: RoleManagementProps) {
     }
   };
 
-  // Duplicate handler functions removed. Only the first set of handleCreateRole, handleUpdateRole, and handleDeleteRole remain.
+  const handleCreateRole = async () => {
+    try {
+      // Validate form
+      const errors: Record<string, string> = {};
+      if (!formData.name.trim()) {
+        errors.name = 'Role name is required';
+      } else if (formData.name.length < 2) {
+        errors.name = 'Role name must be at least 2 characters';
+      } else if (formData.name.length > 50) {
+        errors.name = 'Role name must be less than 50 characters';
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        return;
+      }
+
+      await roleAPI.create(formData);
+      toast.success('Role created successfully');
+      setIsCreateDialogOpen(false);
+      resetForm();
+      loadRoles();
+    } catch (error: any) {
+      // Surface backend validation errors
+      if (error.response?.data?.errors) {
+        setFormErrors(error.response.data.errors);
+      } else if (error.response?.data?.message) {
+        setFormErrors({ name: error.response.data.message });
+      } else {
+        setFormErrors({ name: error.message || 'Unknown error' });
+      }
+      toast.error('Failed to create role: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleUpdateRole = async () => {
+    if (!editingRole) return;
+
+    try {
+      // Validate form
+      const errors: Record<string, string> = {};
+      if (!formData.name.trim()) {
+        errors.name = 'Role name is required';
+      } else if (formData.name.length < 2) {
+        errors.name = 'Role name must be at least 2 characters';
+      } else if (formData.name.length > 50) {
+        errors.name = 'Role name must be less than 50 characters';
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        return;
+      }
+
+      await roleAPI.update(editingRole.id, formData);
+      toast.success('Role updated successfully');
+      setIsEditDialogOpen(false);
+      setEditingRole(null);
+      resetForm();
+      loadRoles();
+    } catch (error: any) {
+      // Surface backend validation errors
+      if (error.response?.data?.errors) {
+        setFormErrors(error.response.data.errors);
+      } else if (error.response?.data?.message) {
+        setFormErrors({ name: error.response.data.message });
+      } else {
+        setFormErrors({ name: error.message || 'Unknown error' });
+      }
+      toast.error('Failed to update role: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleDeleteRole = async () => {
+    if (!deletingRole) return;
+
+    try {
+      await roleAPI.delete(deletingRole.id);
+      toast.success('Role deleted successfully');
+      setDeletingRole(null);
+      loadRoles();
+    } catch (error: any) {
+      let msg = error.response?.data?.message || error.message;
+      if (msg?.toLowerCase().includes('constraint')) {
+        msg = 'Cannot delete role: it is assigned to one or more users.';
+      }
+      toast.error('Failed to delete role: ' + msg);
+    }
+  };
 
   const openEditDialog = (role: Role) => {
     setEditingRole(role);

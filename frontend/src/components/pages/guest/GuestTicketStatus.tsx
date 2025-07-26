@@ -4,7 +4,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Badge } from '../../../components/ui/badge';
 import { Search, Clock, CheckCircle, AlertCircle, XCircle, Copy, RefreshCw } from 'lucide-react';
-import { useSearch } from '@tanstack/react-router';
+import { useSearchParams } from 'react-router-dom';
 
 interface GuestTicket {
   id: number;

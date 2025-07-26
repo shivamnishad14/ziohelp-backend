@@ -46,11 +46,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsernameIgnoreCase(String username);
     @Query(value = "SELECT * FROM \"user\" WHERE email = :email", nativeQuery = true)
     Optional<User> findByEmailNative(@Param("email") String email);
-    
-    // Dashboard-specific queries
-    long countByActive(boolean active);
-    long countByApproved(boolean approved);
-    
-    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.name = :roleName")
-    long countUsersWithRole(@Param("roleName") String roleName);
 } 

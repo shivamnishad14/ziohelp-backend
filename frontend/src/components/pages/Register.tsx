@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { authAPI } from '@/services/API';
+import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../../services/api';
 
 const Register: React.FC = () => {
   const [name, setName] = useState('');

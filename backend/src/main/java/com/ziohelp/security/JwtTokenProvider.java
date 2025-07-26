@@ -37,23 +37,6 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-    public String getEmailFromToken(String token) {
-        // For now, username and email are the same in our authentication
-        return getUsernameFromToken(token);
-    }
-
-    public String generateTokenFromEmail(String email) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpiration);
-
-        return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
-                .compact();
-    }
-
     public boolean validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);

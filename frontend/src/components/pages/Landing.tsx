@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate } from 'react-router-dom';
 import { HelpCircle, ArrowRight } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 

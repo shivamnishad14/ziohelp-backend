@@ -1,4 +1,87 @@
--- Drop and recreate constraints
+-- Enhanced ZioHelp Database with RBAC - Gradual Implementation
+-- Reset and setup with new RBAC features
+
+-- Add enhanced columns to existing tables gradually
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS username VARCHAR(100) UNIQUE;
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS first_name VARCHAR(50);
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS last_name VARCHAR(50);
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20);
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS job_title VARCHAR(100);
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS department VARCHAR(100);
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(255);
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS login_attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP;
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- Add enhanced columns to roles table
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS description VARCHAR(255);
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS is_system BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- Add enhanced columns to organizations
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS description VARCHAR(500);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS website_url VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS address VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS country VARCHAR(100);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS postal_code VARCHAR(20);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_tier VARCHAR(20) NOT NULL DEFAULT 'FREE';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS max_users INTEGER DEFAULT 10;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo_url VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMP;
+
+-- Create RBAC tables if they don't exist
+CREATE TABLE IF NOT EXISTS permissions (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description VARCHAR(255),
+    resource VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(resource, action)
+);
+
+CREATE TABLE IF NOT EXISTS menu_items (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    path VARCHAR(255) UNIQUE NOT NULL,
+    icon VARCHAR(50),
+    description VARCHAR(255),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    category VARCHAR(50),
+    parent_id BIGINT REFERENCES menu_items(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+    role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id BIGINT NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE IF NOT EXISTS role_menu_permissions (
+    id BIGSERIAL PRIMARY KEY,
+    role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    menu_item_id BIGINT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+    can_view BOOLEAN NOT NULL DEFAULT true,
+    can_edit BOOLEAN NOT NULL DEFAULT false,
+    can_delete BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(role_id, menu_item_id)
+);
+
+-- Drop and recreate constraints for existing tables
 DELETE FROM notification n1
 WHERE EXISTS (
     SELECT 1 FROM notification n2
@@ -29,127 +112,201 @@ WHERE EXISTS (
 ALTER TABLE faq DROP CONSTRAINT IF EXISTS faq_question_org_id;
 ALTER TABLE faq ADD CONSTRAINT faq_question_org_id UNIQUE (question, organization_id);
 
--- Add username column
-ALTER TABLE "user" ADD COLUMN IF NOT EXISTS username VARCHAR(100) UNIQUE;
+-- Insert or update roles with enhanced data
+INSERT INTO roles (id, name, description, is_system, is_active) VALUES
+(1, 'ADMIN', 'System Administrator with full access to all features', true, true),
+(2, 'DEVELOPER', 'Developer/Agent with technical support access', true, true),
+(3, 'USER', 'Regular user with basic access to tickets and knowledge base', true, true),
+(4, 'GUEST', 'Guest user with limited access to create tickets', true, true),
+(5, 'TENANT_ADMIN', 'Tenant Administrator with organization-level access', true, true)
+ON CONFLICT (id) DO UPDATE SET
+  description = EXCLUDED.description,
+  is_system = EXCLUDED.is_system,
+  is_active = EXCLUDED.is_active;
 
--- Roles
-INSERT INTO role (id, name) VALUES
-(1, 'ADMIN'), (2, 'DEVELOPER'), (3, 'USER'), (4, 'GUEST'), (5, 'TENANT_ADMIN')
-ON CONFLICT (id) DO NOTHING;
+-- Insert default permissions
+INSERT INTO permissions (name, description, resource, action) VALUES
+('USER_READ', 'Read user information', 'USER', 'READ'),
+('USER_WRITE', 'Create and update users', 'USER', 'WRITE'),
+('USER_DELETE', 'Delete users', 'USER', 'DELETE'),
+('USER_MANAGE', 'Full user management', 'USER', 'MANAGE'),
+('ROLE_READ', 'Read role information', 'ROLE', 'READ'),
+('ROLE_WRITE', 'Create and update roles', 'ROLE', 'WRITE'),
+('ROLE_DELETE', 'Delete roles', 'ROLE', 'DELETE'),
+('ROLE_MANAGE', 'Full role management', 'ROLE', 'MANAGE'),
+('ORGANIZATION_READ', 'Read organization information', 'ORGANIZATION', 'READ'),
+('ORGANIZATION_WRITE', 'Create and update organizations', 'ORGANIZATION', 'WRITE'),
+('ORGANIZATION_DELETE', 'Delete organizations', 'ORGANIZATION', 'DELETE'),
+('ORGANIZATION_MANAGE', 'Full organization management', 'ORGANIZATION', 'MANAGE'),
+('TICKET_READ', 'Read tickets', 'TICKET', 'READ'),
+('TICKET_WRITE', 'Create and update tickets', 'TICKET', 'WRITE'),
+('TICKET_DELETE', 'Delete tickets', 'TICKET', 'DELETE'),
+('TICKET_ASSIGN', 'Assign tickets', 'TICKET', 'ASSIGN'),
+('SYSTEM_ADMIN', 'System administration', 'SYSTEM', 'ADMIN'),
+('AUDIT_READ', 'Read audit logs', 'AUDIT', 'READ')
+ON CONFLICT (resource, action) DO NOTHING;
 
--- Organizations
-INSERT INTO organization (id, name, metadata) VALUES
-(1, 'Acme Corp', NULL), (2, 'Beta Inc', NULL), (3, 'Gamma LLC', NULL), (4, 'Delta Ltd', NULL), (5, 'Epsilon GmbH', NULL),
-(6, 'Zeta SA', NULL), (7, 'Eta BV', NULL), (8, 'Theta PLC', NULL), (9, 'Iota Inc', NULL), (10, 'Kappa Corp', NULL),
-(11, 'Lambda Ltd', NULL), (12, 'Mu GmbH', NULL), (13, 'Nu SA', NULL), (14, 'Xi BV', NULL), (15, 'Omicron PLC', NULL)
-ON CONFLICT (id) DO NOTHING;
+-- Insert default menu items
+INSERT INTO menu_items (name, path, icon, description, sort_order, category) VALUES
+('Dashboard', '/dashboard', 'dashboard', 'Main dashboard', 0, 'GENERAL'),
+('Users', '/admin/users', 'users', 'User management', 1, 'ADMIN'),
+('Roles', '/admin/roles', 'shield', 'Role management', 2, 'ADMIN'),
+('Organizations', '/admin/organizations', 'building', 'Organization management', 3, 'ADMIN'),
+('Tickets', '/tickets', 'ticket', 'Ticket management', 4, 'GENERAL'),
+('Knowledge Base', '/knowledge-base', 'book', 'Knowledge base', 5, 'GENERAL'),
+('Reports', '/reports', 'chart-bar', 'Reports and analytics', 6, 'ADMIN'),
+('Settings', '/settings', 'settings', 'System settings', 7, 'ADMIN'),
+('Audit Logs', '/admin/audit-logs', 'file-text', 'Audit logs', 8, 'ADMIN')
+ON CONFLICT (path) DO NOTHING;
 
--- Users (with username)
-INSERT INTO "user" (
-  id, full_name, email, password, approved, active, organization_id, created_at,
-  email_verified, verification_token, reset_token, username
+-- Organizations with enhanced data
+INSERT INTO organizations (
+  id, name, description, status, subscription_tier, max_users, created_at
 ) VALUES
-  (1, 'Alice', 'alice@acme.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'alice'),
-  (2, 'Bob', 'bob@beta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 2, NOW(), true, null, null, 'bob'),
-  (3, 'Charlie', 'charlie@gamma.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 3, NOW(), true, null, null, 'charlie'),
-  (4, 'David', 'david@delta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 4, NOW(), true, null, null, 'david'),
-  (5, 'Eve', 'eve@epsilon.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 5, NOW(), true, null, null, 'eve'),
-  (6, 'Frank', 'frank@zeta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 6, NOW(), true, null, null, 'frank'),
-  (7, 'Grace', 'grace@eta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 7, NOW(), true, null, null, 'grace'),
-  (8, 'Heidi', 'heidi@theta.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 8, NOW(), true, null, null, 'heidi'),
-  (9, 'Ivan', 'ivan@iota.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 9, NOW(), true, null, null, 'ivan'),
-  (10, 'Judy', 'judy@kappa.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 10, NOW(), true, null, null, 'judy'),
-  (11, 'Mallory', 'mallory@lambda.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 11, NOW(), true, null, null, 'mallory'),
-  (12, 'Niaj', 'niaj@mu.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 12, NOW(), true, null, null, 'niaj'),
-  (13, 'Olivia', 'olivia@nu.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 13, NOW(), true, null, null, 'olivia'),
-  (14, 'Peggy', 'peggy@xi.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 14, NOW(), true, null, null, 'peggy'),
-  (15, 'Sybil', 'sybil@omicron.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 15, NOW(), true, null, null, 'sybil'),
-  (16, 'ZioHelp Admin', 'admin@ziohelp.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'adminuser'),
-  (17, 'Developer Admin', 'developer@ziohelp.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'devadmin')
-ON CONFLICT (id) DO NOTHING;
+(1, 'Acme Corp', 'Leading technology solutions provider', 'ACTIVE', 'PREMIUM', 50, NOW()),
+(2, 'Beta Inc', 'Innovative software development company', 'ACTIVE', 'STANDARD', 25, NOW()),
+(3, 'Gamma LLC', 'Digital transformation consultancy', 'ACTIVE', 'FREE', 10, NOW()),
+(4, 'Delta Ltd', 'Cloud infrastructure specialists', 'ACTIVE', 'PREMIUM', 100, NOW()),
+(5, 'Epsilon GmbH', 'AI and machine learning solutions', 'ACTIVE', 'STANDARD', 30, NOW()),
+(6, 'Zeta SA', 'Cybersecurity and data protection', 'ACTIVE', 'FREE', 10, NOW()),
+(7, 'Eta BV', 'Mobile application development', 'ACTIVE', 'STANDARD', 20, NOW()),
+(8, 'Theta PLC', 'Enterprise software solutions', 'ACTIVE', 'PREMIUM', 75, NOW()),
+(9, 'Iota Inc', 'IoT and smart device integration', 'ACTIVE', 'FREE', 10, NOW()),
+(10, 'Kappa Corp', 'Business process automation', 'ACTIVE', 'STANDARD', 40, NOW())
+ON CONFLICT (id) DO UPDATE SET
+  description = EXCLUDED.description,
+  status = EXCLUDED.status,
+  subscription_tier = EXCLUDED.subscription_tier,
+  max_users = EXCLUDED.max_users;
 
--- User Roles (Many-to-Many join table, including admin and developer admin)
+-- Enhanced Users with RBAC data
+INSERT INTO "user" (
+  id, full_name, first_name, last_name, email, username, password, 
+  approved, active, organization_id, created_at, email_verified, 
+  verification_token, reset_token, job_title, department
+) VALUES
+  (1, 'Alice Johnson', 'Alice', 'Johnson', 'alice@acme.com', 'alice', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'CTO', 'Technology'),
+  (2, 'Bob Smith', 'Bob', 'Smith', 'bob@beta.com', 'bob', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 2, NOW(), true, null, null, 'Lead Developer', 'Engineering'),
+  (3, 'Charlie Brown', 'Charlie', 'Brown', 'charlie@gamma.com', 'charlie', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 3, NOW(), true, null, null, 'Support Manager', 'Customer Support'),
+  (4, 'David Wilson', 'David', 'Wilson', 'david@delta.com', 'david', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 4, NOW(), true, null, null, 'DevOps Engineer', 'Infrastructure'),
+  (5, 'Eve Davis', 'Eve', 'Davis', 'eve@epsilon.com', 'eve', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 5, NOW(), true, null, null, 'Product Manager', 'Product'),
+  (16, 'ZioHelp Admin', 'Admin', 'User', 'admin@ziohelp.com', 'adminuser', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'System Administrator', 'IT'),
+  (17, 'Developer Admin', 'Developer', 'Admin', 'developer@ziohelp.com', 'devadmin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'Senior Developer', 'Development')
+ON CONFLICT (id) DO UPDATE SET
+  first_name = EXCLUDED.first_name,
+  last_name = EXCLUDED.last_name,
+  username = EXCLUDED.username,
+  job_title = EXCLUDED.job_title,
+  department = EXCLUDED.department;
+
+-- User Roles (simplified for existing system compatibility)
 INSERT INTO user_roles (user_id, role_id) VALUES
 (1, 1), -- Alice is ADMIN
-(2, 2), -- Bob is DEVELOPER
+(2, 2), -- Bob is DEVELOPER  
 (3, 3), -- Charlie is USER
 (4, 2), -- David is DEVELOPER
-(5, 3), -- Eve is USER
-(6, 2), -- Frank is DEVELOPER
-(7, 3), -- Grace is USER
-(8, 2), -- Heidi is DEVELOPER
-(9, 3), -- Ivan is USER
-(10, 1), -- Judy is ADMIN
-(11, 4), -- Mallory is GUEST
-(12, 2), -- Niaj is DEVELOPER
-(13, 5), -- Olivia is TENANT_ADMIN
-(14, 3), -- Peggy is USER
-(15, 3), -- Sybil is USER
+(5, 5), -- Eve is TENANT_ADMIN
 (16, 1), -- ZioHelp Admin is ADMIN
 (17, 2)  -- Developer Admin is DEVELOPER
-ON CONFLICT (user_id, role_id) DO NOTHING; -- Developer Admin is DEVELOPER
+ON CONFLICT (user_id, role_id) DO NOTHING;
 
--- Tickets
+-- Assign permissions to roles gradually
+-- ADMIN gets all permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id 
+FROM roles r, permissions p 
+WHERE r.name = 'ADMIN'
+ON CONFLICT DO NOTHING;
+
+-- TENANT_ADMIN gets organization and user management
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id 
+FROM roles r, permissions p 
+WHERE r.name = 'TENANT_ADMIN' 
+AND p.resource IN ('USER', 'ORGANIZATION', 'TICKET') 
+AND p.action IN ('READ', 'WRITE', 'MANAGE')
+ON CONFLICT DO NOTHING;
+
+-- DEVELOPER gets ticket management
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id 
+FROM roles r, permissions p 
+WHERE r.name = 'DEVELOPER' 
+AND p.resource = 'TICKET'
+ON CONFLICT DO NOTHING;
+
+-- USER gets basic read permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id 
+FROM roles r, permissions p 
+WHERE r.name = 'USER' 
+AND p.action = 'READ'
+ON CONFLICT DO NOTHING;
+
+-- Assign menu permissions to roles
+-- ADMIN gets access to all menus
+INSERT INTO role_menu_permissions (role_id, menu_item_id, can_view, can_edit, can_delete)
+SELECT r.id, m.id, true, true, true
+FROM roles r, menu_items m 
+WHERE r.name = 'ADMIN'
+ON CONFLICT DO NOTHING;
+
+-- TENANT_ADMIN gets access to relevant menus
+INSERT INTO role_menu_permissions (role_id, menu_item_id, can_view, can_edit, can_delete)
+SELECT r.id, m.id, true, 
+       CASE WHEN m.category = 'ADMIN' AND m.name NOT IN ('Roles', 'Audit Logs') THEN true ELSE false END,
+       false
+FROM roles r, menu_items m 
+WHERE r.name = 'TENANT_ADMIN' 
+AND (m.category = 'GENERAL' OR (m.category = 'ADMIN' AND m.name IN ('Users', 'Organizations')))
+ON CONFLICT DO NOTHING;
+
+-- Enhanced sample tickets
 INSERT INTO ticket (id, title, description, status, priority, created_by, is_guest, created_at, updated_at, organization_id) VALUES
-(1, 'Login Issue', 'Cannot login to dashboard', 'OPEN', 'HIGH', 'alice@acme.com', false, NOW(), NOW(), 1),
-(2, 'Payment Failed', 'Card declined', 'OPEN', 'MEDIUM', 'bob@beta.com', false, NOW(), NOW(), 2),
-(3, 'Feature Request', 'Add dark mode', 'OPEN', 'LOW', 'charlie@gamma.com', false, NOW(), NOW(), 3),
-(4, 'Bug Report', 'App crashes on submit', 'OPEN', 'HIGH', 'david@delta.com', false, NOW(), NOW(), 4),
-(5, 'Account Locked', 'Too many attempts', 'OPEN', 'MEDIUM', 'eve@epsilon.com', false, NOW(), NOW(), 5),
-(6, 'Password Reset', 'Forgot password', 'OPEN', 'LOW', 'frank@zeta.com', false, NOW(), NOW(), 6),
-(7, 'UI Issue', 'Button not visible', 'OPEN', 'LOW', 'grace@eta.com', false, NOW(), NOW(), 7),
-(8, 'Performance', 'Slow loading', 'OPEN', 'MEDIUM', 'heidi@theta.com', false, NOW(), NOW(), 8),
-(9, 'Integration', 'API not working', 'OPEN', 'HIGH', 'ivan@iota.com', false, NOW(), NOW(), 9),
-(10, 'Notification', 'Not receiving emails', 'OPEN', 'LOW', 'judy@kappa.com', false, NOW(), NOW(), 10),
-(11, 'Data Loss', 'Lost ticket history', 'OPEN', 'HIGH', 'mallory@lambda.com', false, NOW(), NOW(), 11),
-(12, 'Mobile Bug', 'App crashes on iOS', 'OPEN', 'MEDIUM', 'niaj@mu.com', false, NOW(), NOW(), 12),
-(13, 'Export Issue', 'PDF export fails', 'OPEN', 'LOW', 'olivia@nu.com', false, NOW(), NOW(), 13),
-(14, 'Settings', 'Cannot update profile', 'OPEN', 'MEDIUM', 'peggy@xi.com', false, NOW(), NOW(), 14),
-(15, 'Other', 'General feedback', 'OPEN', 'LOW', 'sybil@omicron.com', false, NOW(), NOW(), 15)
+(1, 'Dashboard Performance Issue', 'Dashboard takes too long to load user analytics', 'OPEN', 'HIGH', 'alice@acme.com', false, NOW(), NOW(), 1),
+(2, 'RBAC Permission Error', 'Users cannot access assigned menu items', 'OPEN', 'CRITICAL', 'bob@beta.com', false, NOW(), NOW(), 2),
+(3, 'Email Verification Bug', 'Verification emails not being sent', 'OPEN', 'HIGH', 'charlie@gamma.com', false, NOW(), NOW(), 3),
+(4, 'File Upload Feature Request', 'Need ability to upload attachments to tickets', 'OPEN', 'MEDIUM', 'david@delta.com', false, NOW(), NOW(), 4),
+(5, 'Multi-tenant Data Isolation', 'Ensure tenant data isolation is working correctly', 'OPEN', 'HIGH', 'eve@epsilon.com', false, NOW(), NOW(), 5)
 ON CONFLICT (id) DO NOTHING;
 
--- Comments with auto-generated IDs
+-- Enhanced comments with RBAC context
 INSERT INTO comment (id, ticket_id, author, message, created_at) VALUES
-(1, 1, 'alice@acme.com', 'We are looking into your login issue.', NOW()),
-(2, 2, 'bob@beta.com', 'Please try another card.', NOW()),
-(3, 3, 'charlie@gamma.com', 'Dark mode is on our roadmap.', NOW()),
-(4, 4, 'david@delta.com', 'Can you provide crash logs?', NOW()),
-(5, 5, 'eve@epsilon.com', 'We have unlocked your account.', NOW())
+(1, 1, 'admin@ziohelp.com', 'Investigating dashboard performance with new RBAC features.', NOW()),
+(2, 2, 'developer@ziohelp.com', 'RBAC permissions have been updated. Please test again.', NOW()),
+(3, 3, 'alice@acme.com', 'Email verification service has been enhanced with new features.', NOW()),
+(4, 4, 'bob@beta.com', 'File upload functionality is being developed with security features.', NOW()),
+(5, 5, 'eve@epsilon.com', 'Multi-tenant isolation has been verified and is working correctly.', NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- Notifications
+-- RBAC-aware notifications
 INSERT INTO notification (type, message, seen, timestamp, recipient_id, organization_id) VALUES
-('NEW_TICKET', 'A new ticket has been created.', false, NOW(), 1, 1),
-('COMMENT', 'You have a new comment on your ticket.', false, NOW(), 2, 2),
-('STATUS_UPDATE', 'Your ticket status changed to RESOLVED.', false, NOW(), 3, 3)
+('RBAC_UPDATE', 'Your role permissions have been updated.', false, NOW(), 1, 1),
+('SYSTEM_UPGRADE', 'ZioHelp has been upgraded with enhanced RBAC features.', false, NOW(), 2, 2),
+('MENU_ACCESS', 'New menu items are now available based on your role.', false, NOW(), 3, 3),
+('SECURITY_ALERT', 'Enhanced security features have been enabled.', false, NOW(), 4, 4),
+('FEATURE_RELEASE', 'New file upload and email verification features are live.', false, NOW(), 5, 5)
 ON CONFLICT (recipient_id, timestamp) DO NOTHING;
 
--- Audit Logs
--- Add audit logs
+-- Enhanced audit logs with RBAC actions
 INSERT INTO audit_log (user_email, action, details, timestamp, organization_id) VALUES
-('alice@acme.com', 'CREATE', 'Created ticket', NOW(), 1),
-('judy@kappa.com', 'UPDATE', 'Updated user', NOW(), 10),
-('olivia@nu.com', 'DELETE', 'Deleted FAQ', NOW(), 13),
-('admin@ziohelp.com', 'ROLE_UPDATE', 'Roles updated: ["ADMIN", "TENANT_ADMIN"]', NOW(), 1),
-('developer@ziohelp.com', 'ROLE_UPDATE', 'Role removed: DEVELOPER', NOW(), 1),
-('alice@acme.com', 'ROLE_UPDATE', 'Roles updated: ["ADMIN"]', NOW(), 1)
+('admin@ziohelp.com', 'RBAC_SETUP', 'Initialized RBAC system with permissions and menu access', NOW(), 1),
+('alice@acme.com', 'ROLE_ASSIGNED', 'Assigned ADMIN role with full system access', NOW(), 1),
+('eve@epsilon.com', 'ROLE_ASSIGNED', 'Assigned TENANT_ADMIN role for organization management', NOW(), 5),
+('developer@ziohelp.com', 'PERMISSION_GRANTED', 'Granted TICKET management permissions', NOW(), 1),
+('admin@ziohelp.com', 'SYSTEM_UPGRADE', 'Database enhanced with RBAC and security features', NOW(), 1)
 ON CONFLICT (user_email, timestamp) DO NOTHING;
 
--- FAQs
+-- Enhanced FAQs with RBAC and new features
 INSERT INTO faq (question, answer, organization_id) VALUES
-('How to reset password?', 'Go to login page and click on Forgot Password.', 1),
-('How to check ticket status?', 'Visit ticket status page and enter ticket ID and email.', 2),
-('How to contact support?', 'You can submit a ticket as guest or login to your account.', 3),
-('How to change email?', 'Go to profile settings and update your email.', 4),
-('How to delete account?', 'Contact support to delete your account.', 5),
-('How to export tickets?', 'Use the export button on the dashboard.', 6),
-('How to enable notifications?', 'Check your profile notification settings.', 7),
-('How to invite users?', 'Admins can invite users from the admin panel.', 8),
-('How to assign roles?', 'Role assignment is in the user management section.', 9),
-('How to view audit logs?', 'Audit logs are available to admins.', 10),
-('How to use API?', 'See the API documentation in Swagger.', 11),
-('How to report a bug?', 'Submit a ticket with bug details.', 12),
-('How to request a feature?', 'Submit a ticket with feature request.', 13),
-('How to change password?', 'Go to profile and select change password.', 14),
-('How to logout?', 'Click the logout button in the top right.', 15)
+('How does the new role-based access control work?', 'RBAC allows administrators to assign specific permissions to users based on their roles, controlling access to different features and menu items.', 1),
+('What are the different user roles available?', 'ZioHelp supports 5 roles: ADMIN (full access), TENANT_ADMIN (organization management), DEVELOPER (ticket management), USER (basic access), and GUEST (limited access).', 1),
+('How can I customize menu access for different roles?', 'Administrators can configure which menu items are visible and editable for each role through the role management interface.', 1),
+('Is email verification required for new accounts?', 'Yes, all new user accounts require email verification before they can access the system.', 2),
+('Can I upload files to tickets?', 'Yes, the new file upload feature allows you to attach documents, images, and other files to tickets for better support.', 2),
+('How is data isolated between organizations?', 'ZioHelp uses multi-tenant architecture to ensure complete data isolation between different organizations.', 3),
+('What subscription tiers are available?', 'We offer FREE (10 users), STANDARD (25-40 users), and PREMIUM (50-100 users) subscription tiers.', 3),
+('How can I track user activity?', 'Administrators can view detailed audit logs showing all user actions and system changes.', 4),
+('Can I integrate ZioHelp with other systems?', 'Yes, ZioHelp provides REST APIs and webhook support for integration with external systems.', 4),
+('How do I reset my password?', 'Use the "Forgot Password" link on the login page to receive a secure password reset email.', 5)
 ON CONFLICT (question, organization_id) DO NOTHING;

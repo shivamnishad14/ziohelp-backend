@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { roleAPI } from '@/services/API';
+import { roleAPI } from '@/services/api';
 import { Role } from '@/types';
 
 // Fetch all roles with pagination, search, and filter

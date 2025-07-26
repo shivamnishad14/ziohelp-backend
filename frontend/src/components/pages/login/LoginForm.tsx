@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from '@tanstack/react-router';
-import { useAuth } from '@/context/auth-context';
-import { authAPI } from '@/services/API';
-import { getDashboardRoute } from '@/utils/getDashboardRoute';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/auth-context'
+import { authAPI } from '../../../services/api';
 
 interface LoginFormData {
   email: string;
@@ -18,7 +17,7 @@ export const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'email' | 'username'>('email');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  // const { login } = useAuth();
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -41,24 +40,34 @@ export const LoginForm = () => {
       }
 
       // Build credentials object for backend
-      const email = loginMethod === 'email' ? data.email : data.username;
-      console.log('Login credentials:', { email, password: data.password });
-      
-      // Use auth context login method
-      await login(email, data.password);
-      
-      toast.success('Login successful!');
-      
-      // Use getDashboardRoute utility for navigation
-      const roles = JSON.parse(localStorage.getItem('userRoles') || '["USER"]');
-      const dashboardPath = getDashboardRoute(roles);
-      console.log('Navigating to dashboard:', dashboardPath);
-      navigate({ to: dashboardPath });
+      let credentials: { email?: string; username?: string; password: string } = { password: data.password };
+      if (loginMethod === 'email') {
+        credentials.email = data.email;
+      } else {
+        credentials.username = data.username;
+      }
+      const response = await authAPI.login(credentials);
+      // Accept login as successful if token or user is present in response
+      if (response.data.token || response.data.user) {
+        // Save token to localStorage for API auth
+        if (response.data.token) localStorage.setItem('authToken', response.data.token);
+        // Save roles to localStorage for navigation/authorization
+        let roles = response.data.roles || response.data.user?.roles;
+        if (!roles || !Array.isArray(roles) || roles.length === 0) {
+          roles = ['USER']; // fallback if roles missing
+        }
+        localStorage.setItem('userRoles', JSON.stringify(roles));
+        toast.success(response.data.message || 'Login successful!');
+        const { getDashboardRoute } = await import('../../../utils/getDashboardRoute');
+        navigate(getDashboardRoute(roles));
+      } else {
+        setLoginError(response.data.message || 'Login failed. Please try again.');
+        toast.error(response.data.message || 'Login failed. Please try again.');
+      }
     } catch (error: any) {
       const msg = error.response?.data?.message || 'An error occurred. Please try again.';
       setLoginError(msg);
       toast.error(msg);
-      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }

@@ -13,7 +13,6 @@ import TicketDashboard from './components/pages/developer/TicketDashboard';
 import MyTickets from './components/pages/user/MyTickets';
 import MasterAdminDashboard from './components/pages/admin/MasterAdminDashboard';
 import AdminDashboardMain from './components/pages/admin/AdminDashboardMain';
-import AgentDashboard from './components/pages/agent/AgentDashboard';
 import EngineerDashboard from './components/pages/developer/EngineerDashboard';
 import TenantDashboard from './components/pages/tenant/TenantDashboard';
 import Dashboard from './components/pages/user/Dashboard';
@@ -34,8 +33,7 @@ import { getDashboardRoute } from '@/utils/getDashboardRoute';
 function AutoRedirect() {
   const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
   if (userRoles.length > 0) {
-    const dashboardPath = getDashboardRoute(userRoles);
-    window.location.href = dashboardPath;
+    window.location.href = getDashboardRoute(userRoles);
     return null;
   }
   window.location.href = '/login';
@@ -78,14 +76,6 @@ export function HelpdeskRoutes() {
           </Layout>
         </ProtectedRoute>
       } />
-      {/* Agent Dashboard */}
-      <Route path="/agent/dashboard" element={
-        <ProtectedRoute roles={['AGENT']}>
-          <Layout>
-            <TicketDashboard />
-          </Layout>
-        </ProtectedRoute>
-      } />
       {/* Developer Dashboard */}
       <Route path="/developer/dashboard" element={
         <ProtectedRoute roles={['DEVELOPER']}>
@@ -113,21 +103,6 @@ export function HelpdeskRoutes() {
         <Route path="roles" element={<RoleManagement />} />
         <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Coming soon...</p></div>} />
       </Route>
-      {/* Agent Management Pages */}
-              {/* AGENT ROUTES */}
-        <Route path="/agent-dashboard" element={
-          <ProtectedRoute roles={['AGENT']}>
-            <Layout><AgentDashboard /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/agent-management" element={
-          <ProtectedRoute roles={['AGENT']}>
-            <Layout><Outlet /></Layout>
-          </ProtectedRoute>
-        }>
-          <Route path="tickets" element={<TicketManagement />} />
-          <Route path="knowledge-base" element={<KnowledgeBase />} />
-        </Route>
       {/* Developer Management Pages */}
       <Route path="/developer" element={<ProtectedRoute roles={['DEVELOPER']}><Layout><Outlet /></Layout></ProtectedRoute>}>
         <Route path="tickets" element={<TicketDashboard />} />
@@ -143,7 +118,7 @@ export function HelpdeskRoutes() {
       {/* User Tickets */}
       <Route path="/tickets/my-tickets" element={<ProtectedRoute roles={['USER']}><Layout><MyTickets /></Layout></ProtectedRoute>} />
       {/* Profile */}
-      <Route path="/profile" element={<ProtectedRoute roles={['USER', 'ADMIN', 'AGENT', 'DEVELOPER', 'TENANT_ADMIN']}><Profile /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute roles={['USER', 'ADMIN', 'DEVELOPER', 'TENANT_ADMIN']}><Profile /></ProtectedRoute>} />
       {/* Guest routes (public) */}
       <Route path="/guest/raise-ticket" element={<GuestRaiseTicket />} />
       <Route path="/guest/ticket-status" element={<GuestTicketStatus />} />

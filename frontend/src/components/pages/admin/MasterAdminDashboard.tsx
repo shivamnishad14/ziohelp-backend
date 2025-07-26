@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { userAPI, ticketAPI } from '@/services/API';
+import { userAPI, ticketAPI } from '../../../services/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { onTicketEvent, connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
 
