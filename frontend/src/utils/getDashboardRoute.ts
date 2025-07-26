@@ -1,8 +1,10 @@
 export function getDashboardRoute(roles: string[]): string {
-  const priority = ['ADMIN', 'TENANT_ADMIN', 'DEVELOPER', 'USER', 'GUEST'];
+  const priority = ['SUPER_ADMIN', 'ADMIN', 'AGENT', 'TENANT_ADMIN', 'DEVELOPER', 'USER', 'GUEST'];
   const roleToDashboard: Record<string, string> = {
+    SUPER_ADMIN: '/master-admin/dashboard',
     ADMIN: '/admin/dashboard',
-    TENANT_ADMIN: '/tenant-admin/dashboard',
+    AGENT: '/agent/dashboard',
+    TENANT_ADMIN: '/tenant/dashboard',
     DEVELOPER: '/developer/dashboard',
     USER: '/dashboard',
     GUEST: '/guest/dashboard',

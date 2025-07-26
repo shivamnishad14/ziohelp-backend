@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Layout } from '../../../components/layout/Layout';
-
 import { Button } from '../../../components/ui/button';
 import { onTicketEvent, connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import api from '@/services/API';
 
 const PRODUCT_ID = 1; // TODO: Make this dynamic if needed
 
@@ -39,51 +39,63 @@ const AdminDashboardMain: React.FC = () => {
   const [slaMetrics, setSlaMetrics] = useState<any>({});
   const [userActivity, setUserActivity] = useState<any[]>([]);
 
-  const fetchUsers = useCallback(() => {
+  const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
-    fetch(`/api/v1/users/list?productId=${PRODUCT_ID}&size=20&page=0`)
-      .then(res => res.json())
-      .then(data => {
-        setUsers(data.content || []);
-        setLoadingUsers(false);
-      });
+    try {
+      const response = await api.get(`/admin/users?productId=${PRODUCT_ID}&size=20&page=0`);
+      setUsers(response.data.content || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
   }, []);
 
-  const fetchStatsAndTickets = useCallback(() => {
-    fetch(`/api/v1/tickets/count?productId=${PRODUCT_ID}`)
-      .then(res => res.json())
-      .then(data => setTotalTickets(data.data));
-    fetch(`/api/v1/tickets/count?productId=${PRODUCT_ID}&status=OPEN`)
-      .then(res => res.json())
-      .then(data => setOpenTickets(data.data));
-    fetch(`/api/v1/users/count?productId=${PRODUCT_ID}`)
-      .then(res => res.json())
-      .then(data => setTotalUsers(data.data));
-    fetch(`/api/v1/tickets/list?productId=${PRODUCT_ID}&size=10&page=0`)
-      .then(res => res.json())
-      .then(data => {
-        setTickets(data.content || []);
-        setLoadingTickets(false);
-      });
-    fetchUsers();
+  const fetchStatsAndTickets = useCallback(async () => {
+    try {
+      // Fetch ticket count
+      const ticketCountResponse = await api.get(`/tickets/count?productId=${PRODUCT_ID}`);
+      setTotalTickets(ticketCountResponse.data.data || ticketCountResponse.data);
+      
+      // Fetch open tickets count
+      const openTicketsResponse = await api.get(`/tickets/count?productId=${PRODUCT_ID}&status=OPEN`);
+      setOpenTickets(openTicketsResponse.data.data || openTicketsResponse.data);
+      
+      // Fetch users count
+      const usersCountResponse = await api.get(`/admin/users/count?productId=${PRODUCT_ID}`);
+      setTotalUsers(usersCountResponse.data.data || usersCountResponse.data);
+      
+      // Fetch tickets list
+      const ticketsResponse = await api.get(`/tickets?productId=${PRODUCT_ID}&size=10&page=0`);
+      setTickets(ticketsResponse.data.content || []);
+      setLoadingTickets(false);
+      
+      fetchUsers();
+    } catch (error) {
+      console.error('Error fetching stats and tickets:', error);
+      setLoadingTickets(false);
+    }
   }, [fetchUsers]);
 
-  const fetchAnalytics = useCallback(() => {
-    fetch('/api/dashboard/analytics/ticket-trends')
-      .then(res => res.json())
-      .then(data => {
-        const trends = data.ticketTrends || {};
-        setTicketTrends(Object.entries(trends).map(([date, count]) => ({ date, count })));
-      });
-    fetch('/api/dashboard/analytics/sla-metrics')
-      .then(res => res.json())
-      .then(data => setSlaMetrics(data));
-    fetch('/api/dashboard/analytics/user-activity')
-      .then(res => res.json())
-      .then(data => {
-        const activity = data.userActivity || {};
-        setUserActivity(Object.entries(activity).map(([date, count]) => ({ date, count })));
-      });
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      // Fetch ticket trends
+      const trendsResponse = await api.get('/dashboard/analytics/ticket-trends');
+      const trends = trendsResponse.data.ticketTrends || {};
+      setTicketTrends(Object.entries(trends).map(([date, count]) => ({ date, count })));
+      
+      // Fetch SLA metrics
+      const slaResponse = await api.get('/dashboard/analytics/sla-metrics');
+      setSlaMetrics(slaResponse.data);
+      
+      // Fetch user activity
+      const activityResponse = await api.get('/dashboard/analytics/user-activity');
+      const activity = activityResponse.data.userActivity || {};
+      setUserActivity(Object.entries(activity).map(([date, count]) => ({ date, count })));
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    }
   }, []);
 
   useEffect(() => {
@@ -119,8 +131,12 @@ const AdminDashboardMain: React.FC = () => {
   }
 
   const handleToggleActive = async (userId: number) => {
-    await fetch(`/api/v1/users/toggle-active/${userId}`, { method: 'POST' });
-    fetchUsers();
+    try {
+      await api.post(`/admin/users/toggle-active/${userId}`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error toggling user active status:', error);
+    }
   };
 
   return (

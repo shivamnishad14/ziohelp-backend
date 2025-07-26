@@ -20,7 +20,7 @@ import {
   useDeleteFile,
   useDownloadFile
 } from '@/hooks/api/useFiles';
-import { useAuth } from '@/hooks/api/useAuth';
+import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AxiosProgressEvent } from 'axios';
 

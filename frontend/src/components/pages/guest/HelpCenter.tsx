@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '../../../components/ui/badge';
 import { Search, Plus, FileText, HelpCircle, Send, CheckCircle, Eye } from 'lucide-react';
 import FAQArticleDetail from '../../../components/FAQArticleDetail';
-import { useSearchParams } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useSearch } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 
 interface FAQ {
   id: number;

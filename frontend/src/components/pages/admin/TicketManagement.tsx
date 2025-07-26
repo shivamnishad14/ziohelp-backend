@@ -38,7 +38,7 @@ import {
 } from '@/hooks/api/useTickets';
 import { useListUsers } from '@/hooks/api/useUsers';
 import { useListProducts } from '@/hooks/api/useProducts';
-import { useAuth } from '@/hooks/api/useAuth';
+import { useAuth } from '@/context/auth-context';
 import { onTicketEvent, connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
 
 interface TicketFormData {

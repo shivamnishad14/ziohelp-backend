@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Menu, Bell, Search, LogOut, User, ChevronDown, HelpCircle, Sun, Moon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { authAPI } from '@/services/API';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@tanstack/react-router';
 import { useNotification } from '../../context/notification-context';
 
 interface HeaderProps {

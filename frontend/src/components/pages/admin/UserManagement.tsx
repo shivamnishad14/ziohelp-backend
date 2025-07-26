@@ -33,7 +33,7 @@ import {
   UserRole
 } from '@/hooks/api/useUsers';
 import { useListProducts } from '@/hooks/api/useProducts';
-import { useAuth } from '@/hooks/api/useAuth';
+import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/ui/DataTable';
 

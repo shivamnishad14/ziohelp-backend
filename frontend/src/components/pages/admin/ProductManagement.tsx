@@ -25,7 +25,7 @@ import {
   useUpdateProductStatus,
   useSearchProducts
 } from '@/hooks/api/useProducts';
-import { useAuth } from '@/hooks/api/useAuth';
+import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProductFormData {
