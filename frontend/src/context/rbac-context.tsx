@@ -24,8 +24,9 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
   const [menuPermissions, setMenuPermissions] = useState<RoleMenuPermission[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+
   const loadUserPermissions = useCallback(async () => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user || !user.id) return;
 
     setIsLoading(true);
     try {
