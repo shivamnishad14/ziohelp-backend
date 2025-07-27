@@ -2,79 +2,52 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { roleAPI } from '@/services/api';
 import { Role } from '@/types';
 
-// Fetch all roles with pagination, search, and filter
-export function useRoles(params: { page: number; size: number; sort?: string; search?: string; filter?: string }) {
-  return useQuery(['roles', params], () => roleAPI.getAll(params), {
-    keepPreviousData: true,
+export const useRoles = (params?: { page?: number; size?: number }) =>
+  useQuery<{ content: Role[]; totalElements: number; totalPages: number }>({
+    queryKey: ['roles', params],
+    queryFn: () => roleAPI.getRoles(params).then(res => res.data),
   });
-}
 
-// Create a new role
-export function useCreateRole() {
+export const useRole = (id: number) =>
+  useQuery<Role>({
+    queryKey: ['roles', id],
+    queryFn: () => roleAPI.getRole(id).then(res => res.data),
+    enabled: !!id,
+  });
+
+export const useCreateRole = () => {
   const queryClient = useQueryClient();
-  return useMutation((data: { name: string }) => roleAPI.create(data), {
+  
+  return useMutation({
+    mutationFn: (data: { name: string }) => roleAPI.createRole(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['roles']);
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
     },
   });
-}
+};
 
-// Update a role
-export function useUpdateRole() {
+export const useUpdateRole = () => {
   const queryClient = useQueryClient();
-  return useMutation(({ id, data }: { id: number; data: { name: string } }) => roleAPI.update(id, data), {
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name: string } }) => 
+      roleAPI.updateRole(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['roles']);
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
     },
   });
-}
+};
 
-// Delete a role
-export function useDeleteRole() {
+export const useDeleteRole = () => {
   const queryClient = useQueryClient();
-  return useMutation((id: number) => roleAPI.delete(id), {
+  
+  return useMutation({
+    mutationFn: (id: number) => roleAPI.deleteRole(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['roles']);
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
     },
   });
-}
+};
 
-
-
-
-// Role API
-// export const roleAPI = {
-//   getAll: (pageable?: any) => {
-//     // Convert legacy sort format to new format
-//     const params = { ...pageable };
-//     if (params.sort) {
-//       const [sortBy, sortDirection] = params.sort.split(',');
-//       params.sortBy = sortBy || 'name';
-//       params.sortDirection = sortDirection || 'asc';
-//       delete params.sort;
-//     }
-//     return api.get<{
-//       data: any; content: Role[], totalElements: number, totalPages: number 
-// }>('/roles/list', { params });
-//   },
-//   getAllList: () => 
-//     api.get<Role[]>('/roles/all'),
-//   getById: (id: string) => 
-//     api.get<Role>(`/roles/${id}`),
-//   getByName: (name: string) => 
-//     api.get<Role>(`/roles/name/${name}`),
-//   create: (role: Omit<Role, 'id' | 'createdAt' | 'updatedAt' | 'userCount'>) => 
-//     api.post<Role>('/roles/create', role),
-//   update: (id: string, role: Partial<Role>) => 
-//     api.put<Role>(`/roles/${id}/update`, role),
-//   delete: (id: string) => 
-//     api.delete(`/roles/${id}/delete`),
-//   checkNameExists: (name: string) => 
-//     api.get<boolean>(`/roles/check-name/${name}`),
-//   checkIdExists: (id: string) => 
-//     api.get<boolean>(`/roles/check-id/${id}`),
-//   search: (searchRequest: any) => 
-//     api.post<{ content: Role[], totalElements: number, totalPages: number }>('/roles/search', searchRequest),
-//   getCount: () => 
-//     api.get<number>('/roles/count'),
-// };
+// Legacy exports
+export const useListRoles = useRoles;

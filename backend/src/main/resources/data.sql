@@ -310,3 +310,4 @@ INSERT INTO faq (question, answer, organization_id) VALUES
 ('Can I integrate ZioHelp with other systems?', 'Yes, ZioHelp provides REST APIs and webhook support for integration with external systems.', 4),
 ('How do I reset my password?', 'Use the "Forgot Password" link on the login page to receive a secure password reset email.', 5)
 ON CONFLICT (question, organization_id) DO NOTHING;
+CREATE DATABASE ziohelpdb;

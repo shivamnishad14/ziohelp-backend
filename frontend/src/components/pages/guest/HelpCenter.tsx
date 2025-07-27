@@ -7,8 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '../../../components/ui/badge';
 import { Search, Plus, FileText, HelpCircle, Send, CheckCircle, Eye } from 'lucide-react';
 import FAQArticleDetail from '../../../components/FAQArticleDetail';
-import { useSearchParams } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useSearch, Link } from '@tanstack/react-router';
 
 interface FAQ {
   id: number;
@@ -38,8 +37,8 @@ interface TicketForm {
 }
 
 const HelpCenter: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const productId = searchParams.get('productId') || '1'; // Default to product 1 if not specified
+  const search = useSearch({ from: '/help-center' });
+  const productId = search.productId || '1'; // Default to product 1 if not specified
   
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [articles, setArticles] = useState<KnowledgeBaseArticle[]>([]);

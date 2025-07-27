@@ -1,5 +1,4 @@
 import * as React from 'react'
-// TODO: Install 'react-day-picker' and its types
 import { DayPicker } from 'react-day-picker'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'

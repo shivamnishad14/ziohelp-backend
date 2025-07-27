@@ -1,0 +1,3 @@
+CREATE DATABASE ziohelpdb;
+CREATE USER ziohelpuser WITH ENCRYPTED PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE ziohelpdb TO ziohelpuser;

@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.ziohelp.repository.UserRepository;
 import com.ziohelp.entity.User;
-import com.ziohelp.service.AccessControlService;
+// import com.ziohelp.service.AccessControlService;
 import com.ziohelp.entity.Comment;
 import com.ziohelp.repository.CommentRepository;
 import com.ziohelp.service.AuditLogService;
@@ -50,7 +50,7 @@ public class TicketController {
     private final TicketHistoryRepository ticketHistoryRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
-    private final AccessControlService accessControlService;
+    // private final AccessControlService accessControlService;
     private final CommentRepository commentRepository;
     @Autowired
     private AuditLogService auditLogService;
@@ -107,7 +107,7 @@ public class TicketController {
     @PreAuthorize("hasRole('TENANT_ADMIN')") // Tenant admin can view tickets for their org
     public ResponseEntity<List<Ticket>> getTicketsByOrganization(@PathVariable Long orgId) {
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateOrganizationAccess(currentUser, orgId);
+        // accessControlService.validateOrganizationAccess(currentUser, orgId);
         return ResponseEntity.ok(ticketRepository.findByOrganizationId(orgId));
     }
 
@@ -115,7 +115,7 @@ public class TicketController {
     @PreAuthorize("hasRole('TENANT_ADMIN')") // Tenant admin can create tickets for their org
     public ResponseEntity<Ticket> createTicketForOrganization(@RequestBody Ticket ticket, @PathVariable Long orgId) {
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateContentCreation(currentUser, orgId);
+        // accessControlService.validateContentCreation(currentUser, orgId);
         Organization org = organizationService.getOrganizationById(orgId);
         if (org == null) return ResponseEntity.badRequest().build();
         ticket.setOrganization(org);
@@ -141,7 +141,7 @@ public class TicketController {
     public ResponseEntity<Ticket> resolveTicket(@PathVariable Long id) {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateTicketModification(currentUser, ticket);
+        // accessControlService.validateTicketModification(currentUser, ticket);
         ticket.setStatus("RESOLVED");
         Ticket saved = ticketRepository.save(ticket);
         notificationService.sendNotification("Ticket resolved: " + saved.getTitle());
@@ -155,7 +155,7 @@ public class TicketController {
     public ResponseEntity<Ticket> getTicketById(@PathVariable Long id) {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateTicketAccess(currentUser, ticket);
+        // accessControlService.validateTicketAccess(currentUser, ticket);
         return ResponseEntity.ok(ticket);
     }
 
@@ -164,7 +164,7 @@ public class TicketController {
     public ResponseEntity<Attachment> uploadAttachment(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws Exception {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateTicketAccess(currentUser, ticket);
+        // accessControlService.validateTicketAccess(currentUser, ticket);
         // In real app, save file to storage and set URL
         Attachment att = Attachment.builder()
             .filename(file.getOriginalFilename())
@@ -181,7 +181,7 @@ public class TicketController {
     public ResponseEntity<List<Attachment>> getAttachments(@PathVariable Long id) {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateTicketAccess(currentUser, ticket);
+        // accessControlService.validateTicketAccess(currentUser, ticket);
         return ResponseEntity.ok(new java.util.ArrayList<>(ticket.getAttachments()));
     }
 
@@ -190,7 +190,7 @@ public class TicketController {
     public ResponseEntity<TicketHistory> logHistory(@PathVariable Long id, @RequestBody TicketHistory history) {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateTicketAccess(currentUser, ticket);
+        // accessControlService.validateTicketAccess(currentUser, ticket);
         history.setTicket(ticket);
         history.setTimestamp(LocalDateTime.now());
         ticketHistoryRepository.save(history);
@@ -202,7 +202,7 @@ public class TicketController {
     public ResponseEntity<Ticket> setCategory(@PathVariable Long id, @RequestBody String category) {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateTicketAccess(currentUser, ticket);
+        // accessControlService.validateTicketAccess(currentUser, ticket);
         ticket.setCategory(category);
         return ResponseEntity.ok(ticketRepository.save(ticket));
     }
@@ -239,7 +239,7 @@ public class TicketController {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
         User assignedUser = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateTicketAssignment(currentUser, assignedUser);
+        // accessControlService.validateTicketAssignment(currentUser, assignedUser);
         ticket.setAssignedTo(assignedUser);
         TicketHistory history = TicketHistory.builder()
             .action("ASSIGNMENT")

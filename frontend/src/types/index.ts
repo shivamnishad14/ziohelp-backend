@@ -1,161 +1,162 @@
-export interface Role {
-  id: string;
-  name: string;
-  userCount: number;
-  createdAt: string;
-  updatedAt: string;
+// Re-export all types from individual type files
+export * from './user';
+export * from './ticket';
+export * from './content';
+
+// Common API response types
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
 }
 
-export interface User {
-  id?: string;
-  name: string;
-  email: string;
-  roles: string[];
-  avatar?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  active?: boolean;
-  approved?: boolean;
-  username?: string;
-  organizationId?: string;
-  password?: string;
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
 }
 
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  status: 'active' | 'inactive' | 'maintenance';
-  logo?: string;
-  supportEmail: string;
-  sla: {
-    responseTime: number; // in hours
-    resolutionTime: number; // in hours
-  };
-  settings: {
-    allowPublicTickets: boolean;
-    requireAuthentication: boolean;
-    autoAssignTickets: boolean;
-  };
-  admins: User[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export enum TicketStatus {
-  OPEN = 'OPEN',
-  IN_PROGRESS = 'IN_PROGRESS',
-  RESOLVED = 'RESOLVED',
-  CLOSED = 'CLOSED',
-  CANCELLED = 'CANCELLED',
-}
-
-export enum TicketPriority {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  URGENT = 'URGENT',
-}
-
-export enum TicketCategory {
-  TECHNICAL = 'TECHNICAL',
-  BILLING = 'BILLING',
-  GENERAL = 'GENERAL',
-  FEATURE_REQUEST = 'FEATURE_REQUEST',
-  BUG_REPORT = 'BUG_REPORT',
-  ACCOUNT = 'ACCOUNT',
-  PRODUCT = 'PRODUCT',
-}
-
-export interface Ticket {
-  id: string;
-  subject: string;
-  description: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  category: TicketCategory;
-  productId: string;
-  assignedTo?: User;
-  createdBy: User;
-  createdAt: string;
-  updatedAt: string;
-  resolvedAt?: string;
-  attachments?: FileAttachment[];
-  comments?: Comment[];
-  guestName?: string;
-  guestEmail?: string;
-  guestToken?: string;
-  isGuestTicket?: boolean;
-}
-
-export interface FileAttachment {
-  id: string;
-  ticket: Ticket;
-  filename: string;
-  url: string;
-  uploadedBy?: User;
-  uploadedAt: string;
-}
-
-export interface Comment {
-  id: string;
-  ticket: Ticket;
-  user: User;
-  content: string;
-  createdAt: string;
-}
-
-export interface TicketHistory {
-  id: string;
-  ticket: Ticket;
-  user: User;
-  action: string;
-  fromStatus?: TicketStatus;
-  toStatus?: TicketStatus;
-  details?: string;
+export interface ApiError {
+  message: string;
+  status: number;
   timestamp: string;
+  path: string;
+  errors?: ValidationError[];
 }
 
-export interface KnowledgeBaseArticle {
+export interface ValidationError {
+  field: string;
+  message: string;
+  rejectedValue: any;
+}
+
+// Authentication context types
+export interface AuthContextType {
+  user: AuthUser | null;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+  register: (data: RegisterData) => Promise<void>;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  hasRole: (role: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
+}
+
+// Theme context types
+export interface ThemeContextType {
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+}
+
+// Notification context types
+export interface NotificationContextType {
+  showNotification: (notification: {
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message?: string;
+    duration?: number;
+  }) => void;
+  notifications: ToastNotification[];
+  removeNotification: (id: string) => void;
+}
+
+export interface ToastNotification {
   id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
   title: string;
-  content: string;
-  category: string;
-  productId: string;
-  author: User;
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
+  message?: string;
+  duration: number;
+  createdAt: number;
 }
 
-export interface ProductAnalytics {
-  productId: string;
+// Search context types
+export interface SearchContextType {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  searchResults: SearchResult[];
+  isSearching: boolean;
+  performSearch: (query: string) => Promise<void>;
+  clearSearch: () => void;
+}
+
+export interface SearchResult {
+  id: string;
+  type: 'ticket' | 'faq' | 'article' | 'user' | 'product';
+  title: string;
+  description: string;
+  url: string;
+  metadata?: Record<string, any>;
+}
+
+// WebSocket types
+export interface WebSocketMessage {
+  type: string;
+  payload: any;
+  timestamp: number;
+}
+
+export interface TicketUpdateMessage {
+  ticketId: number;
+  type: 'status_change' | 'assignment' | 'comment' | 'created';
+  data: any;
+  userId?: number;
+}
+
+// File upload types
+export interface FileUploadProgress {
+  id: string;
+  file: File;
+  progress: number;
+  status: 'pending' | 'uploading' | 'completed' | 'error';
+  url?: string;
+  error?: string;
+}
+
+// Dashboard types
+export interface DashboardStats {
   totalTickets: number;
   openTickets: number;
+  inProgressTickets: number;
   resolvedTickets: number;
-  averageResponseTime: number; // in hours
-  averageResolutionTime: number; // in hours
-  ticketsByPriority: {
-    low: number;
-    medium: number;
-    high: number;
-    urgent: number;
-  };
-  ticketsByStatus: {
-    open: number;
-    in_progress: number;
-    resolved: number;
-    closed: number;
+  avgResponseTime: number;
+  avgResolutionTime: number;
+  customerSatisfaction: number;
+  recentTickets: Ticket[];
+}
+
+export interface AgentStats extends DashboardStats {
+  assignedTickets: number;
+  resolvedToday: number;
+  pendingAssignment: number;
+}
+
+export interface AdminStats extends DashboardStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalProducts: number;
+  totalOrganizations: number;
+  systemHealth: {
+    status: 'healthy' | 'warning' | 'critical';
+    uptime: number;
+    memory: number;
+    cpu: number;
   };
 }
 
-export interface AuditLog {
-  id: string;
-  action: string;
-  entityType: 'product' | 'ticket' | 'user' | 'knowledge_base';
-  entityId: string;
-  userId: string;
-  changes: Record<string, any>;
-  timestamp: string;
+// Route types for TanStack Router
+export interface RouteContext {
+  auth: AuthContextType;
+  title?: string;
+}
+
+export interface SearchParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  sort?: string;
+  filter?: string;
 } 

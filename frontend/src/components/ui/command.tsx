@@ -10,8 +10,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-// TODO: Install 'cmdk' and its types
-
 function Command({
   className,
   ...props

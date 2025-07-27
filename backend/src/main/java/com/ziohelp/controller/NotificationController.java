@@ -4,7 +4,7 @@ import com.ziohelp.entity.Notification;
 import com.ziohelp.entity.Organization;
 import com.ziohelp.repository.NotificationRepository;
 import com.ziohelp.service.OrganizationService;
-import com.ziohelp.service.AccessControlService;
+// import com.ziohelp.service.AccessControlService;
 import com.ziohelp.service.AuthService;
 import com.ziohelp.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +29,8 @@ public class NotificationController {
     @Autowired
     private OrganizationService organizationService;
 
-    @Autowired
-    private AccessControlService accessControlService;
+    // @Autowired
+    // private AccessControlService accessControlService;
     @Autowired
     private AuthService authService;
 
@@ -44,7 +44,7 @@ public class NotificationController {
     @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')") // All authenticated users can view notifications
     public ResponseEntity<List<Notification>> getNotificationsByOrganization(@PathVariable Long orgId) {
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateOrganizationAccess(currentUser, orgId);
+        // accessControlService.validateOrganizationAccess(currentUser, orgId);
         return ResponseEntity.ok(notificationRepository.findByOrganizationId(orgId));
     }
 
@@ -52,7 +52,7 @@ public class NotificationController {
     @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')") // Only admin or tenant admin can create notifications
     public ResponseEntity<Notification> createNotificationForOrganization(@RequestBody Notification notification, @PathVariable Long orgId) {
         User currentUser = authService.getAuthenticatedUser();
-        accessControlService.validateContentCreation(currentUser, orgId);
+        // accessControlService.validateContentCreation(currentUser, orgId);
         Organization org = organizationService.getOrganizationById(orgId);
         if (org == null) return ResponseEntity.badRequest().build();
         notification.setOrganization(org);

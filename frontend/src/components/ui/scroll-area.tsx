@@ -1,5 +1,4 @@
 import * as React from 'react'
-// TODO: Install '@radix-ui/react-scroll-area' and its types
 import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
 import { cn } from '@/lib/utils'
 

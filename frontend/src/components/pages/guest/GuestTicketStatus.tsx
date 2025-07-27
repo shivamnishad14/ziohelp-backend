@@ -4,7 +4,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Badge } from '../../../components/ui/badge';
 import { Search, Clock, CheckCircle, AlertCircle, XCircle, Copy, RefreshCw } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearch, useNavigate } from '@tanstack/react-router';
 
 interface GuestTicket {
   id: number;
@@ -20,8 +20,9 @@ interface GuestTicket {
 }
 
 const GuestTicketStatus: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialToken = searchParams.get('token') || '';
+  const search = useSearch({ from: '/guest-ticket-status' });
+  const navigate = useNavigate();
+  const initialToken = search.token || '';
   
   const [token, setToken] = useState(initialToken);
   const [ticket, setTicket] = useState<GuestTicket | null>(null);
@@ -88,7 +89,10 @@ const GuestTicketStatus: React.FC = () => {
       if (response.ok) {
         const result = await response.json();
         setTicket(result.data);
-        setSearchParams({ token: token.trim() });
+        navigate({ 
+          to: '/guest-ticket-status', 
+          search: { token: token.trim() } 
+        });
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Ticket not found');
@@ -298,7 +302,10 @@ const GuestTicketStatus: React.FC = () => {
                     setTicket(null);
                     setError('');
                     setSearched(false);
-                    setSearchParams({});
+                    navigate({ 
+                      to: '/guest-ticket-status', 
+                      search: {} 
+                    });
                   }}
                 >
                   Search Another Ticket

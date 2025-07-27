@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearch, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 const ResetPassword: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const search = useSearch({ from: '/reset-password' });
   const [newPassword, setNewPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const token = searchParams.get('token');
+  const token = search.token;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
