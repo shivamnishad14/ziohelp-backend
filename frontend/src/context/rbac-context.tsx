@@ -26,23 +26,30 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
 
 
   const loadUserPermissions = useCallback(async () => {
-    if (!isAuthenticated || !user || !user.id) return;
+    if (!isAuthenticated || !user || !user.id) {
+      console.warn('RBAC: Skipping permission load, user or user.id missing:', { isAuthenticated, user });
+      return;
+    }
 
     setIsLoading(true);
     try {
+      console.log('RBAC: Loading permissions for user:', user);
       // Load user permissions based on roles
       const permissionsResponse = await rbacService.getUserPermissions(user.id);
       setPermissions(permissionsResponse.data);
+      console.log('RBAC: Loaded permissions:', permissionsResponse.data);
 
       // Load user menus based on role permissions
       const menusResponse = await rbacService.getUserMenus(user.id);
       setUserMenus(menusResponse.data);
+      console.log('RBAC: Loaded menus:', menusResponse.data);
 
       // Load menu permissions for the user
       const menuPermissionsResponse = await rbacService.getUserMenuPermissions(user.id);
       setMenuPermissions(menuPermissionsResponse.data);
+      console.log('RBAC: Loaded menu permissions:', menuPermissionsResponse.data);
     } catch (error) {
-      console.error('Error loading user permissions:', error);
+      console.error('RBAC: Error loading user permissions:', error);
     } finally {
       setIsLoading(false);
     }

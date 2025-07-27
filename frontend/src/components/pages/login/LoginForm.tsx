@@ -47,12 +47,12 @@ export const LoginForm = () => {
         credentials.username = data.username;
       }
       const response = await authAPI.login(credentials);
-      
+      console.log('Login response:', response.data);
       // Accept login as successful if token is present in response
       if (response.data.token) {
         // Save token to localStorage for API auth
         localStorage.setItem('authToken', response.data.token);
-        
+
         // Save user data
         const userData = {
           userId: response.data.userId,
@@ -61,21 +61,26 @@ export const LoginForm = () => {
           roles: response.data.roles || ['USER']
         };
         localStorage.setItem('userData', JSON.stringify(userData));
-        
+
         // Save roles to localStorage for navigation/authorization
         let roles = response.data.roles || ['USER'];
+        console.log('Roles to store in localStorage:', roles);
         localStorage.setItem('userRoles', JSON.stringify(roles));
-        
+
         toast.success('Login successful!');
-        
+
         // Navigate based on roles - prioritize ADMIN first
         if (roles.includes('ADMIN')) {
+          console.log('Navigating to /admin/dashboard');
           navigate('/admin/dashboard');
         } else if (roles.includes('TENANT_ADMIN')) {
+          console.log('Navigating to /tenant-admin/dashboard');
           navigate('/tenant-admin/dashboard');
         } else if (roles.includes('DEVELOPER')) {
+          console.log('Navigating to /developer/dashboard');
           navigate('/developer/dashboard');
         } else {
+          console.log('Navigating to /dashboard');
           navigate('/dashboard');
         }
       } else {
@@ -86,6 +91,7 @@ export const LoginForm = () => {
       const msg = error.response?.data?.message || 'An error occurred. Please try again.';
       setLoginError(msg);
       toast.error(msg);
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
