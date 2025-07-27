@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { useSearch, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { authAPI } from '@/services/API';
 
 const ResetPassword: React.FC = () => {
   const search = useSearch({ from: '/reset-password' });
@@ -21,22 +23,12 @@ const ResetPassword: React.FC = () => {
     }
     setStatus('loading');
     try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword })
-      });
-      const msg = await res.text();
-      if (res.ok) {
-        setStatus('success');
-        setMessage(msg || 'Password reset successful!');
-      } else {
-        setStatus('error');
-        setMessage(msg || 'Password reset failed.');
-      }
-    } catch (err) {
+      await authAPI.resetPassword(token, newPassword);
+      setStatus('success');
+      setMessage('Password reset successful!');
+    } catch (err: any) {
       setStatus('error');
-      setMessage('Password reset failed.');
+      setMessage(err.response?.data?.message || 'Password reset failed.');
     }
   };
 
