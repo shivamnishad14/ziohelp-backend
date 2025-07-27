@@ -5,7 +5,7 @@ AI-powered Helpdesk SaaS with 5 roles: Admin, Developer, User, Guest, Tenant_Adm
 
 ## ✅ **COMPLETED TASKS**
 
-### Backend (Phase 1-8) ✅
+### Backend (Phase 1-8) ✅ 
 - ✅ Spring Boot setup with Java 17+
 - ✅ PostgreSQL database configuration
 - ✅ JWT authentication & authorization

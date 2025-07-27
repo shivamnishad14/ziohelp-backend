@@ -47,19 +47,37 @@ export const LoginForm = () => {
         credentials.username = data.username;
       }
       const response = await authAPI.login(credentials);
-      // Accept login as successful if token or user is present in response
-      if (response.data.token || response.data.user) {
+      
+      // Accept login as successful if token is present in response
+      if (response.data.token) {
         // Save token to localStorage for API auth
-        if (response.data.token) localStorage.setItem('authToken', response.data.token);
+        localStorage.setItem('authToken', response.data.token);
+        
+        // Save user data
+        const userData = {
+          userId: response.data.userId,
+          email: response.data.email,
+          fullName: response.data.fullName,
+          roles: response.data.roles || ['USER']
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
         // Save roles to localStorage for navigation/authorization
-        let roles = response.data.roles || response.data.user?.roles;
-        if (!roles || !Array.isArray(roles) || roles.length === 0) {
-          roles = ['USER']; // fallback if roles missing
-        }
+        let roles = response.data.roles || ['USER'];
         localStorage.setItem('userRoles', JSON.stringify(roles));
-        toast.success(response.data.message || 'Login successful!');
-        const { getDashboardRoute } = await import('../../../utils/getDashboardRoute');
-        navigate(getDashboardRoute(roles));
+        
+        toast.success('Login successful!');
+        
+        // Navigate based on roles - prioritize ADMIN first
+        if (roles.includes('ADMIN')) {
+          navigate('/admin/dashboard');
+        } else if (roles.includes('TENANT_ADMIN')) {
+          navigate('/tenant-admin/dashboard');
+        } else if (roles.includes('DEVELOPER')) {
+          navigate('/developer/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setLoginError(response.data.message || 'Login failed. Please try again.');
         toast.error(response.data.message || 'Login failed. Please try again.');

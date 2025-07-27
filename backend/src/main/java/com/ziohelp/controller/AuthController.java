@@ -51,6 +51,9 @@ public class AuthController {
     private RoleRepository roleRepository;
 
     @Autowired
+    private com.ziohelp.repository.OrganizationRepository organizationRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -179,7 +182,21 @@ public class AuthController {
             LoginRequest request = mapper.readValue(rawBody, LoginRequest.class);
             System.out.println("Parsed email: " + request.getEmail());
             System.out.println("Parsed password: " + request.getPassword());
-            return ResponseEntity.ok("Parsed successfully: " + request.getEmail());
+            
+            // Find user and check password
+            User user = userRepository.findByEmailIgnoreCase(request.getEmail().trim()).orElse(null);
+            if (user != null) {
+                System.out.println("User found: " + user.getEmail());
+                System.out.println("Stored password: " + user.getPassword());
+                System.out.println("Input password: " + request.getPassword());
+                System.out.println("Password matches: " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
+                System.out.println("User active: " + user.isActive());
+                System.out.println("User approved: " + user.isApproved());
+                System.out.println("Email verified: " + user.isEmailVerified());
+                return ResponseEntity.ok("Debug info logged to console for: " + request.getEmail());
+            } else {
+                return ResponseEntity.ok("User not found: " + request.getEmail());
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(400).body("JSON parse error: " + e.getMessage());

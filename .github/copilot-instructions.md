@@ -3,7 +3,7 @@
 ## Project Overview
 ZioHelp is an AI-powered Helpdesk SaaS application with a Spring Boot backend and React frontend.
 
-## Technical Stack
+## Technical Stack 
 
 ### Backend (Spring Boot)
 - Java 17

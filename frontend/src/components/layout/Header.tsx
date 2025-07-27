@@ -6,23 +6,27 @@ import { useNavigate, Link } from '@tanstack/react-router';
 import { useNotification } from '../../context/notification-context';
 
 interface HeaderProps {
-  onMenuToggle: () => void;
+  onMenuClick: () => void;
 }
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuClick }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
   
-  // Get current user from localStorage instead of API call
+  // Get current user from localStorage
   const getCurrentUser = () => {
-    const userInfo = localStorage.getItem('userInfo');
-    return userInfo ? JSON.parse(userInfo) : null;
+    try {
+      const userData = localStorage.getItem('userData');
+      return userData ? JSON.parse(userData) : null;
+    } catch {
+      return null;
+    }
   };
   
   const currentUser = getCurrentUser();
-  const userRole = localStorage.getItem('userRole');
+  const userRoles = JSON.parse(localStorage.getItem('userRoles') || '["USER"]');
 
   // Theme switcher logic
   const [isDark, setIsDark] = useState(() => {
@@ -45,7 +49,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
   }, [isDark]);
 
   const handleLogout = () => {
-    authAPI.logout();
+    // Clear localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('userRoles');
     navigate('/login');
   };
 
@@ -56,7 +63,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         variant="ghost"
         size="icon"
         className="lg:hidden"
-        onClick={onMenuToggle}
+        onClick={onMenuClick}
       >
         <Menu className="h-5 w-5" />
         <span className="sr-only">Toggle menu</span>
@@ -134,7 +141,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           >
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-foreground">
-                {currentUser?.name || 'User'}
+                {currentUser?.fullName || 'User'}
               </p>
               <p className="text-xs text-gray-500">
                 {currentUser?.email || 'user@example.com'}
@@ -142,7 +149,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
             </div>
             <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
               <span className="text-sm font-medium text-gray-700">
-                {(currentUser?.name || 'U').charAt(0).toUpperCase()}
+                {(currentUser?.fullName || 'U').charAt(0).toUpperCase()}
               </span>
             </div>
             <ChevronDown className="h-4 w-4" />
@@ -152,8 +159,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
           {userMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-background rounded-md shadow-lg py-1 z-50 border border-border">
               <div className="px-4 py-2 text-sm text-foreground border-b border-border">
-                <p className="font-medium">{currentUser?.name || 'User'}</p>
-                <p className="text-gray-500">{userRole || 'USER'}</p>
+                <p className="font-medium">{currentUser?.fullName || 'User'}</p>
+                <p className="text-gray-500">{userRoles?.join(', ') || 'USER'}</p>
               </div>
               <button
                 onClick={handleLogout}

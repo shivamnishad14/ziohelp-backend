@@ -1,6 +1,20 @@
 -- Enhanced ZioHelp Database with RBAC - Gradual Implementation
 -- Reset and setup with new RBAC features
 
+-- Note: DELETE statements commented out to allow clean startup
+-- DELETE FROM user_roles;
+-- DELETE FROM role_permissions;
+-- DELETE FROM role_menu_permissions;
+-- DELETE FROM audit_log;
+-- DELETE FROM notification;
+-- DELETE FROM faq;
+-- DELETE FROM tickets;
+-- DELETE FROM "user";
+-- DELETE FROM organizations;
+-- DELETE FROM roles;
+-- DELETE FROM permissions;
+-- DELETE FROM menu_items;
+
 -- Add enhanced columns to existing tables gradually
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS username VARCHAR(100) UNIQUE;
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS first_name VARCHAR(50);
@@ -185,13 +199,13 @@ INSERT INTO "user" (
   approved, active, organization_id, created_at, email_verified, 
   verification_token, reset_token, job_title, department
 ) VALUES
-  (1, 'Alice Johnson', 'Alice', 'Johnson', 'alice@acme.com', 'alice', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'CTO', 'Technology'),
-  (2, 'Bob Smith', 'Bob', 'Smith', 'bob@beta.com', 'bob', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 2, NOW(), true, null, null, 'Lead Developer', 'Engineering'),
-  (3, 'Charlie Brown', 'Charlie', 'Brown', 'charlie@gamma.com', 'charlie', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 3, NOW(), true, null, null, 'Support Manager', 'Customer Support'),
-  (4, 'David Wilson', 'David', 'Wilson', 'david@delta.com', 'david', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 4, NOW(), true, null, null, 'DevOps Engineer', 'Infrastructure'),
-  (5, 'Eve Davis', 'Eve', 'Davis', 'eve@epsilon.com', 'eve', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 5, NOW(), true, null, null, 'Product Manager', 'Product'),
-  (16, 'ZioHelp Admin', 'Admin', 'User', 'admin@ziohelp.com', 'adminuser', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'System Administrator', 'IT'),
-  (17, 'Developer Admin', 'Developer', 'Admin', 'developer@ziohelp.com', 'devadmin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', true, true, 1, NOW(), true, null, null, 'Senior Developer', 'Development')
+  (1, 'Alice Johnson', 'Alice', 'Johnson', 'alice@acme.com', 'alice', 'password123', true, true, 1, NOW(), true, null, null, 'CTO', 'Technology'),
+  (2, 'Bob Smith', 'Bob', 'Smith', 'bob@beta.com', 'bob', 'password123', true, true, 2, NOW(), true, null, null, 'Lead Developer', 'Engineering'),
+  (3, 'Charlie Brown', 'Charlie', 'Brown', 'charlie@gamma.com', 'charlie', 'password123', true, true, 3, NOW(), true, null, null, 'Support Manager', 'Customer Support'),
+  (4, 'David Wilson', 'David', 'Wilson', 'david@delta.com', 'david', 'password123', true, true, 4, NOW(), true, null, null, 'DevOps Engineer', 'Infrastructure'),
+  (5, 'Eve Davis', 'Eve', 'Davis', 'eve@epsilon.com', 'eve', 'password123', true, true, 5, NOW(), true, null, null, 'Product Manager', 'Product'),
+  (16, 'ZioHelp Admin', 'Admin', 'User', 'admin@ziohelp.com', 'adminuser', 'password123', true, true, 1, NOW(), true, null, null, 'System Administrator', 'IT'),
+  (17, 'Developer Admin', 'Developer', 'Admin', 'developer@ziohelp.com', 'devadmin', 'password123', true, true, 1, NOW(), true, null, null, 'Senior Developer', 'Development')
 ON CONFLICT (id) DO UPDATE SET
   first_name = EXCLUDED.first_name,
   last_name = EXCLUDED.last_name,

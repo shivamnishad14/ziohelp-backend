@@ -35,13 +35,16 @@ api.interceptors.response.use(
 
 // API Endpoints
 export const authAPI = {
-  login: (credentials: { username: string; password: string }) =>
+  login: (credentials: { username?: string; email?: string; password: string }) =>
     api.post('/auth/login', credentials),
+  loginDebug: (rawBody: any) =>
+    api.post('/auth/login-debug', rawBody),
   register: (userData: any) => api.post('/auth/register', userData),
-  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
-  resetPassword: (token: string, password: string) =>
-    api.post('/auth/reset-password', { token, password }),
-  verifyEmail: (token: string) => api.post('/auth/verify-email', { token }),
+  forgotPassword: (email: string) => api.post('/auth/request-password-reset', { email }),
+  resetPassword: (token: string, newPassword: string) =>
+    api.post('/auth/reset-password', { token, newPassword }),
+  verifyEmail: (token: string) => api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`),
+  logout: () => api.post('/auth/logout'),
   refreshToken: () => api.post('/auth/refresh'),
 };
 

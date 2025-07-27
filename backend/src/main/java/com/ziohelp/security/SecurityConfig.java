@@ -55,8 +55,8 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Use BCrypt for password hashing (matches database hashes)
-        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        // Use NoOpPasswordEncoder for plain text passwords during development
+        return org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance();
     }
 
     @Bean

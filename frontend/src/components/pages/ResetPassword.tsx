@@ -23,7 +23,7 @@ const ResetPassword: React.FC = () => {
     }
     setStatus('loading');
     try {
-      await authAPI.resetPassword(token, newPassword);
+      await authAPI.resetPassword(token, newPassword); // now sends { token, newPassword }
       setStatus('success');
       setMessage('Password reset successful!');
     } catch (err: any) {

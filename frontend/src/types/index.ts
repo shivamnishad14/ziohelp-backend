@@ -2,6 +2,7 @@
 export * from './user';
 export * from './ticket';
 export * from './content';
+export * from './rbac';
 
 // Common API response types
 export interface ApiResponse<T> {
