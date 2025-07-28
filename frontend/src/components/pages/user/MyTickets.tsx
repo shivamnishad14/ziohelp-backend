@@ -11,19 +11,19 @@ const MyTickets: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [updating, setUpdating] = useState(false);
 
-  // Assume productId is '1' for now
-  const productId = '1';
+  // TODO: Make productId dynamic instead of hardcoded '1'
+  const productId = 1; // should be a number for ticketAPI
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const userId = userInfo.id?.toString();
+  const userId = userInfo.id;
 
   const fetchMyTickets = async () => {
     setLoading(true);
     setError('');
     try {
-      // For now, fetch all tickets and filter by assignedTo
-      const res = await ticketAPI.getAll(productId);
+      // Fetch all tickets and filter by assignedTo
+      const res = await ticketAPI.getTickets({ productId });
       const myTickets = res.data.content?.filter((ticket: any) => 
-        ticket.assignedTo?.id?.toString() === userId
+        ticket.assignedTo?.id === userId
       ) || [];
       setTickets(myTickets);
     } catch (err) {
@@ -38,7 +38,7 @@ const MyTickets: React.FC = () => {
     // eslint-disable-next-line
   }, []);
 
-  const handleStatusUpdate = async (ticketId: string, newStatus: string) => {
+  const handleStatusUpdate = async (ticketId: number, newStatus: string) => {
     setUpdating(true);
     setError('');
     setMessage('');
@@ -53,13 +53,13 @@ const MyTickets: React.FC = () => {
     }
   };
 
-  const handleAddComment = async (ticketId: string) => {
+  const handleAddComment = async (ticketId: number) => {
     if (!newComment.trim()) return;
     setUpdating(true);
     setError('');
     setMessage('');
     try {
-      await ticketAPI.addComment(ticketId, userId, { content: newComment });
+      await ticketAPI.addComment(ticketId, newComment);
       setMessage('Comment added successfully!');
       setNewComment('');
       fetchMyTickets();

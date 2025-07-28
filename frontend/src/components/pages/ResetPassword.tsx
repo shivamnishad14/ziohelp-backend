@@ -4,7 +4,7 @@ import { useSearch, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { authAPI } from '@/services/API';
+import { authAPI } from '@/services/api';
 
 const ResetPassword: React.FC = () => {
   const search = useSearch({ from: '/reset-password' });

@@ -17,8 +17,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
-// TODO: Replace with actual sidebar data import
-const sidebarData = { navGroups: [] };
+// TODO: Integrate sidebar data from actual source when available
 import { ScrollArea } from './ui/scroll-area'
 
 export function CommandMenu() {
@@ -40,7 +39,8 @@ export function CommandMenu() {
       <CommandList>
         <ScrollArea className='h-72 pr-1'>
           <CommandEmpty>No results found.</CommandEmpty>
-          {sidebarData.navGroups.map((group: any) => (
+          {/* TODO: Integrate sidebar data from actual source when available */}
+          {/* {sidebarData.navGroups.map((group: any) => (
             <CommandGroup key={group.title} heading={group.title}>
               {group.items?.map((navItem: any, i: number) => {
                 if (navItem.url)
@@ -75,7 +75,7 @@ export function CommandMenu() {
                 ))
               })}
             </CommandGroup>
-          ))}
+          ))} */}
           <CommandSeparator />
           <CommandGroup heading='Theme'>
             <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>

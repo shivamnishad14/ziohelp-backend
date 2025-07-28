@@ -100,39 +100,4 @@ export const knowledgeBaseAPI = {
   createArticle: (data: any) => api.post('/knowledge-base', data),
   updateArticle: (id: number, data: any) => api.put(`/knowledge-base/${id}`, data),
   deleteArticle: (id: number) => api.delete(`/knowledge-base/${id}`),
-  publishArticle: (id: number) => api.put(`/knowledge-base/${id}/publish`),
-};
-
-export const productAPI = {
-  getProducts: (params?: any) => api.get('/products', { params }),
-  getProduct: (id: number) => api.get(`/products/${id}`),
-  createProduct: (data: any) => api.post('/products', data),
-  updateProduct: (id: number, data: any) => api.put(`/products/${id}`, data),
-  deleteProduct: (id: number) => api.delete(`/products/${id}`),
-};
-
-export const organizationAPI = {
-  getOrganizations: (params?: any) => api.get('/organizations', { params }),
-  getOrganization: (id: number) => api.get(`/organizations/${id}`),
-  createOrganization: (data: any) => api.post('/organizations', data),
-  updateOrganization: (id: number, data: any) => api.put(`/organizations/${id}`, data),
-  deleteOrganization: (id: number) => api.delete(`/organizations/${id}`),
-};
-
-export const fileAPI = {
-  upload: (file: FormData) => api.post('/files/upload', file, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  getFiles: (params?: any) => api.get('/files', { params }),
-  deleteFile: (id: number) => api.delete(`/files/${id}`),
-};
-
-export const notificationAPI = {
-  getNotifications: (params?: any) => api.get('/notifications', { params }),
-  markAsRead: (id: number) => api.put(`/notifications/${id}/read`),
-  markAllAsRead: () => api.put('/notifications/mark-all-read'),
-  deleteNotification: (id: number) => api.delete(`/notifications/${id}`),
-};
-
-// Export api instance as default
-export default api;
+}; 

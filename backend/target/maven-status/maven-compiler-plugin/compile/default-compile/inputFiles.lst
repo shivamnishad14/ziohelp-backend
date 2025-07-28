@@ -7,7 +7,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\No
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\AuditLogRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\config\CorsConfig.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\UserController.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\EnhancedDashboardController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\AIChatController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\LoginRequest.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Product.java
@@ -31,8 +30,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\Ti
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\security\AuthEntryPointJwt.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\security\JwtAuthFilter.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\UserService.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\ChangePasswordRequest.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\AuthDtos.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\PdfExportService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\UserDto.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Comment.java
@@ -45,7 +42,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\FaqController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\ApiError.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\TicketExportController.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\RefreshTokenRequest.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Role.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\User.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\KnowledgeBaseArticleRepository.java
@@ -74,6 +70,5 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\PageResponse.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\OrganizationService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\exception\ResourceNotFoundException.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\ApiResponse.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\TicketHistoryRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\ProductController.java

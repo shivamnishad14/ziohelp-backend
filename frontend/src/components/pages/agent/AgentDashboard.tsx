@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { connectWebSocket, disconnectWebSocket, onTicketEvent } from '@/lib/websocket';
-import api from '@/services/API';
+import api from '@/services/api';
 
-const PRODUCT_ID = 1; // TODO: Make this dynamic if needed
+// TODO: Make PRODUCT_ID dynamic if needed in the future.
+const PRODUCT_ID = 1;
 
 interface Ticket {
   id: number;

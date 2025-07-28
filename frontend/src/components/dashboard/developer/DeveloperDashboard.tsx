@@ -21,7 +21,7 @@ export const DeveloperDashboard: React.FC = () => {
   const { user } = useAuth();
   const { userMenus } = useRBAC();
 
-  // Mock data - replace with real API calls
+  // TODO: Replace mock stats with real API data
   const stats = {
     assignedTickets: 15,
     completedToday: 3,
