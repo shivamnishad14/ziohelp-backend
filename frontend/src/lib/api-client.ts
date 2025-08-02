@@ -1,4 +1,4 @@
 
-// Re-export the default axios instance from API.ts as apiClient
-import api from '../services/api';
+// Re-export the named axios instance from api.ts as apiClient
+import { api } from '../services/api';
 export const apiClient = api;

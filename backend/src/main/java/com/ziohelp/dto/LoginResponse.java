@@ -3,7 +3,6 @@ package com.ziohelp.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -13,5 +12,9 @@ public class LoginResponse {
     private Long userId;
     private String email;
     private String fullName;
-    private List<String> roles;
+    private String role;
+    
+    // Explicit setters for compilation
+    public void setRole(String role) { this.role = role; }
+    public String getRole() { return role; }
 } 

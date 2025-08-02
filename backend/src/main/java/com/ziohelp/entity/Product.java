@@ -41,4 +41,10 @@ public class Product {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+    
+    // Explicit getters for compilation
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getDomain() { return domain; }
+    public void setDomain(String domain) { this.domain = domain; }
 } 

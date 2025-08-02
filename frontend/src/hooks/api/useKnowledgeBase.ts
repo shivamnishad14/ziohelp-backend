@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { knowledgeBaseAPI } from '@/services/api';
+import { knowledgeBaseAPI, api } from '@/services/api';
 import { KnowledgeBaseArticle, KnowledgeBaseFormData, KnowledgeBaseSearchParams, PaginatedKnowledgeBase } from '@/types';
 
 export const useArticles = (params?: KnowledgeBaseSearchParams) =>
@@ -17,9 +17,8 @@ export const useArticle = (id: number) =>
 
 export const useCreateArticle = () => {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: (data: KnowledgeBaseFormData) => knowledgeBaseAPI.createArticle(data),
+    mutationFn: (data: any) => knowledgeBaseAPI.createArticle(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base'] });
     },
@@ -28,10 +27,9 @@ export const useCreateArticle = () => {
 
 export const useUpdateArticle = () => {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: KnowledgeBaseFormData }) => 
-      knowledgeBaseAPI.updateArticle(id, data),
+    mutationFn: ({ articleId, article }: { articleId: number; article: any }) =>
+      knowledgeBaseAPI.updateArticle(articleId, article),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base'] });
     },
@@ -51,7 +49,6 @@ export const useDeleteArticle = () => {
 
 export const usePublishArticle = () => {
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: (id: number) => knowledgeBaseAPI.publishArticle(id),
     onSuccess: () => {
@@ -64,15 +61,15 @@ export const usePublishArticle = () => {
 export const useListArticles = useArticles;
 export const useGetArticle = useArticle;
 
-export const useSearchArticles = (q: string) =>
+export const useSearchArticles = (params: any) =>
   useQuery({
-    queryKey: ['articles', 'search', q],
-    queryFn: async () => (await api.get('/knowledge-base/articles/search', { params: { q } })).data,
-    enabled: !!q,
+    queryKey: ['articles', 'search', params],
+    queryFn: async () => (await api.get('/knowledge-base/search', { params })).data,
+    enabled: !!params && (!!params.query || !!params.category),
   });
 
-export const useArticleCategories = () =>
+export const useArticleCategories = (productId?: number) =>
   useQuery({
-    queryKey: ['article-categories'],
-    queryFn: async () => (await api.get('/knowledge-base/categories')).data,
+    queryKey: ['article-categories', productId],
+    queryFn: async () => (await api.get('/knowledge-base/categories', { params: { productId } })).data,
   });

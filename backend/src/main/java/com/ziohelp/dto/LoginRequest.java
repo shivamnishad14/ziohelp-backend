@@ -29,4 +29,10 @@ public class LoginRequest {
     public String getLoginIdentifier() {
         return email != null && !email.trim().isEmpty() ? email.trim() : username.trim();
     }
+    
+    // Explicit getters for compilation
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 } 

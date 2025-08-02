@@ -20,7 +20,7 @@ import { Route as indexRoute } from './routes/index'
 import { Route as forgotPasswordRoute } from './routes/forgot-password'
 import { Route as dashboardRoute } from './routes/dashboard'
 import { Route as masterAdminDashboardRoute } from './routes/master-admin/dashboard'
-import { Route as adminDashboardRoute } from './routes/admin/dashboard'
+import { Route as adminDashboardRoute } from './routes/admin/index'
 
 // Create Virtual Routes
 

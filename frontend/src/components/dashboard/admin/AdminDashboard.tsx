@@ -17,11 +17,17 @@ import {
   Clock,
   TrendingUp
 } from 'lucide-react';
-import { PermissionGuard, MultiplePermissionGuard } from '@/components/rbac';
+import { PermissionGuard } from '@/components/rbac';
+import Unauthorized from '@/components/pages/Unauthorized';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { userMenus } = useRBAC();
+  const { userMenus, hasPermission } = useRBAC();
+
+  // Check if user has admin access
+  if (!user?.roles?.includes('ADMIN') && !user?.roles?.includes('MASTER_ADMIN')) {
+    return <Unauthorized />;
+  }
 
   // Mock data - replace with real API calls
   const stats = {

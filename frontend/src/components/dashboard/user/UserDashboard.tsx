@@ -2,24 +2,33 @@ import React from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useRBAC } from '@/context/rbac-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Link } from '@tanstack/react-router';
-import { 
-  Ticket, 
-  MessageSquare,
+import {
+  Ticket,
   Plus,
   Clock,
+  MessageSquare,
   CheckCircle,
   AlertCircle,
   TrendingUp,
-  Book,
   Search
+} from 'lucide-react';
+import Unauthorized from '@/components/pages/Unauthorized';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Link } from '@tanstack/react-router';
+import {
+  Book
 } from 'lucide-react';
 import { PermissionGuard } from '@/components/rbac';
 
 export const UserDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { userMenus, hasPermission } = useRBAC();
+
+  // Check if user has access
+  if (!user?.roles?.includes('USER') && !user?.roles?.some(role => ['AGENT', 'ADMIN', 'TENANT_ADMIN', 'DEVELOPER'].includes(role))) {
+    return <Unauthorized />;
+  }
   const { userMenus } = useRBAC();
 
   // Mock data - replace with real API calls

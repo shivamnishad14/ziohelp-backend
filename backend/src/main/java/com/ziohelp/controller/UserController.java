@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.ziohelp.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +33,8 @@ import com.ziohelp.service.AuditLogService;
 @Tag(name = "Users", description = "Operations related to users")
 public class UserController {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     private final UserRepository userRepository;
     private final AuthService authService;
     private final OrganizationService organizationService;
@@ -41,7 +45,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'TENANT_ADMIN', 'DEVELOPER')") // All authenticated users except guest
     public ResponseEntity<UserDto> getCurrentUser() {
         User user = authService.getAuthenticatedUser();
-        return ResponseEntity.ok(mapUserToDto(user));
+        return ResponseEntity.ok(safeMapUserToDto(user));
     }
 
     @PutMapping("/me")
@@ -51,7 +55,7 @@ public class UserController {
         user.setFullName(dto.getName());
         user.setEmail(dto.getEmail());
         userRepository.save(user);
-        return ResponseEntity.ok(mapUserToDto(user));
+        return ResponseEntity.ok(safeMapUserToDto(user));
     }
 
     @PostMapping
@@ -77,9 +81,13 @@ public class UserController {
                 user.setPassword(authService.encodePassword(dto.getPassword()));
             }
             userRepository.save(user);
-            return ResponseEntity.ok(mapUserToDto(user));
+            return ResponseEntity.ok(safeMapUserToDto(user));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error creating user: " + e.getMessage());
+            logger.error("Error creating user", e);
+            return ResponseEntity.status(500).body(new java.util.HashMap<String, Object>() {{
+                put("error", "Error creating user");
+                put("message", e.getMessage());
+            }});
         }
     }
 
@@ -97,7 +105,7 @@ public class UserController {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<User> userPage = userRepository.findByOrganizationIdPaged(orgId, search.isEmpty() ? null : search, pageable);
-        List<UserDto> dtos = userPage.getContent().stream().map(this::mapUserToDto).collect(java.util.stream.Collectors.toList());
+        List<UserDto> dtos = userPage.getContent().stream().map(this::safeMapUserToDto).collect(java.util.stream.Collectors.toList());
         PageResponse<UserDto> response = new PageResponse<>(
             dtos,
             userPage.getNumber(),
@@ -132,15 +140,33 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<UserDto>> getUsers(
+    public ResponseEntity<?> getUsers(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "") String search
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<User> userPage = userRepository.findAllPaged(search.isEmpty() ? null : search, pageable);
-        Page<UserDto> dtoPage = userPage.map(this::mapUserToDto);
-        return ResponseEntity.ok(dtoPage);
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<User> userPage = userRepository.findAllPaged(search.isEmpty() ? null : search, pageable);
+            List<UserDto> content = userPage.getContent().stream().map(this::safeMapUserToDto).collect(Collectors.toList());
+            // Return structure matching frontend expectation
+            return ResponseEntity.ok(
+                new java.util.HashMap<String, Object>() {{
+                    put("content", content);
+                    put("page", userPage.getNumber());
+                    put("size", userPage.getSize());
+                    put("totalElements", userPage.getTotalElements());
+                    put("totalPages", userPage.getTotalPages());
+                    put("last", userPage.isLast());
+                }}
+            );
+        } catch (Exception e) {
+            logger.error("Error fetching users", e);
+            return ResponseEntity.status(500).body(new java.util.HashMap<String, Object>() {{
+                put("error", "Internal server error");
+                put("message", e.getMessage());
+            }});
+        }
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -171,7 +197,7 @@ public class UserController {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<User> userPage = userRepository.findAllPaged(search.isEmpty() ? null : search, pageable);
-        List<UserDto> dtos = userPage.getContent().stream().map(this::mapUserToDto).collect(java.util.stream.Collectors.toList());
+        List<UserDto> dtos = userPage.getContent().stream().map(this::safeMapUserToDto).collect(java.util.stream.Collectors.toList());
         PageResponse<UserDto> response = new PageResponse<>(
             dtos,
             userPage.getNumber(),
@@ -197,7 +223,7 @@ public class UserController {
         if (user == null) return ResponseEntity.status(404).body("User not found");
         user.setActive(!user.isActive());
         userRepository.save(user);
-        return ResponseEntity.ok(mapUserToDto(user));
+        return ResponseEntity.ok(safeMapUserToDto(user));
     }
 
     @PutMapping("/{userId}/approve-admin")
@@ -207,7 +233,7 @@ public class UserController {
         if (user == null) return ResponseEntity.status(404).body("User not found");
         user.setApproved(true);
         userRepository.save(user);
-        return ResponseEntity.ok(mapUserToDto(user));
+        return ResponseEntity.ok(safeMapUserToDto(user));
     }
 
     @PutMapping("/{userId}/reject-admin")
@@ -217,20 +243,33 @@ public class UserController {
         if (user == null) return ResponseEntity.status(404).body("User not found");
         user.setApproved(false);
         userRepository.save(user);
-        return ResponseEntity.ok(mapUserToDto(user));
+        return ResponseEntity.ok(safeMapUserToDto(user));
     }
-    // --- Utility: Map User to UserDto ---
-    private UserDto mapUserToDto(User user) {
+    // --- Utility: Map User to UserDto (null-safe, all expected fields) ---
+    private UserDto safeMapUserToDto(User user) {
         if (user == null) return null;
         UserDto dto = new UserDto();
-        dto.setId(user.getId().toString()); // Convert Long to String
-        dto.setName(user.getFullName());
-        dto.setEmail(user.getEmail());
-        dto.setRoles(user.getRoles() != null ? user.getRoles().stream().map(Role::getName).collect(Collectors.toList()) : null);
-        dto.setActive(user.isActive());
-        dto.setApproved(user.isApproved());
-        dto.setUsername(user.getUsername());
-        dto.setOrganizationId(user.getOrganization() != null ? user.getOrganization().getId().toString() : null); // Convert Long to String
+        try {
+            dto.setId(user.getId() != null ? user.getId().toString() : null);
+            dto.setName(user.getFullName() != null ? user.getFullName() : "");
+            dto.setEmail(user.getEmail() != null ? user.getEmail() : "");
+            // If roles is null or empty, fallback to user.getRole() if present
+            if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+                dto.setRoles(user.getRoles().stream().map(r -> r != null && r.getName() != null ? r.getName() : "").collect(Collectors.toList()));
+            } else if (user.getRole() != null) {
+                dto.setRoles(java.util.Collections.singletonList(user.getRole()));
+            } else {
+                dto.setRoles(java.util.Collections.emptyList());
+            }
+            dto.setActive(user.isActive());
+            dto.setApproved(user.isApproved());
+            dto.setUsername(user.getUsername() != null ? user.getUsername() : "");
+            dto.setOrganizationId(user.getOrganization() != null && user.getOrganization().getId() != null ? user.getOrganization().getId().toString() : null);
+            // Add createdAt, isApproved, isActive for frontend
+            dto.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+        } catch (Exception e) {
+            logger.error("Error mapping User to UserDto for user id: {}", user.getId(), e);
+        }
         return dto;
     }
 

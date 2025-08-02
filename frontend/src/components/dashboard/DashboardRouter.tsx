@@ -1,9 +1,11 @@
 import React from 'react';
 import { useAuth } from '@/context/auth-context';
 import { AdminDashboard } from './admin/AdminDashboard';
+import { TenantDashboard } from './tenant/TenantDashboard';
+import { AgentDashboard } from './agent/AgentDashboard';
 import { DeveloperDashboard } from './developer/DeveloperDashboard';
-import { TenantAdminDashboard } from './tenant-admin/TenantAdminDashboard';
 import { UserDashboard } from './user/UserDashboard';
+import Unauthorized from '@/components/pages/Unauthorized';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 
@@ -32,11 +34,15 @@ export const DashboardRouter: React.FC = () => {
   }
 
   if (hasAnyRole(['TENANT_ADMIN'])) {
-    return <TenantAdminDashboard />;
+    return <TenantDashboard />;
   }
 
-  if (hasAnyRole(['DEVELOPER', 'AGENT'])) {
+  if (hasAnyRole(['DEVELOPER'])) {
     return <DeveloperDashboard />;
+  }
+
+  if (hasAnyRole(['AGENT'])) {
+    return <AgentDashboard />;
   }
 
   if (hasAnyRole(['USER'])) {

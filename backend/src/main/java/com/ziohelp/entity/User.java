@@ -48,6 +48,9 @@ public class User {
     private String jobTitle;
     private String department;
     private String avatarUrl;
+    private String role; // Add role column
+    private String firstName;
+    private String lastName;
     private java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
     private java.time.LocalDateTime lastLoginAt;
@@ -100,4 +103,26 @@ public class User {
     public String getJobTitle() { return jobTitle; }
     public String getDepartment() { return department; }
     public String getAvatarUrl() { return avatarUrl; }
+    
+    // Additional explicit getters and setters for compilation and DTO compatibility
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
+
+    public Set<Role> getRoles() { return roles; }
+    public void setRoles(Set<Role> roles) { this.roles = roles; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 }

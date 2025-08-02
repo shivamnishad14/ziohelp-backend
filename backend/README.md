@@ -1,3 +1,6 @@
+## Folder Structure Update
+
+Scripts and logs have been moved to `scripts/` and `logs/` folders for better organization. See `ARCHIVE_README.txt` for details.
 # ZioHelp Backend
 
 AI-powered Helpdesk SaaS backend built with Spring Boot, PostgreSQL, and Google Cloud Vertex AI.

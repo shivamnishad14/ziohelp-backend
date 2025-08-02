@@ -55,7 +55,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Use NoOpPasswordEncoder for plain text passwords during development
+        // Use NoOpPasswordEncoder for plain text passwords (not secure, for dev only)
         return org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance();
     }
 

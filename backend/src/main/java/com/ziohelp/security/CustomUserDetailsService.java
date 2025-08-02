@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
         
         // Check if user is approved and active
@@ -33,12 +33,25 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User account is not active: " + email);
         }
         
-        // Get roles from the user's roles set
-        List<SimpleGrantedAuthority> authorities = user.getRoles() != null ? 
-            user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                .collect(Collectors.toList()) :
-            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        // PRIORITY FIX: Use the role string field instead of the problematic roles collection
+        // This matches the fix we made in AuthController
+        List<SimpleGrantedAuthority> authorities;
+        
+        if (user.getRole() != null && !user.getRole().trim().isEmpty()) {
+            // Use the role string field which is populated correctly
+            authorities = Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().trim().toUpperCase())
+            );
+            System.out.println("Using role from string field for security context: " + user.getRole());
+        } else {
+            // Fallback to roles collection if string field is empty
+            authorities = user.getRoles() != null ? 
+                user.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                    .collect(Collectors.toList()) :
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+            System.out.println("Using roles collection fallback for security context");
+        }
         
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())

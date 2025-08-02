@@ -15,7 +15,7 @@ public class AuditLogService {
     public void logActivity(String action, String details, String userEmail) {
         AuditLog log = new AuditLog();
         log.setAction(action);
-        log.setDetails(details);
+        log.setDetails(details != null && details.length() > 255 ? details.substring(0, 255) : details);
         log.setUserEmail(userEmail);
         log.setTimestamp(LocalDateTime.now());
         auditLogRepository.save(log);

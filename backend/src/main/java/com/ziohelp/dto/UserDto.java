@@ -114,4 +114,8 @@ public class UserDto {
     // Additional compatibility methods for controller usage
     public boolean isActive() { return isActive != null ? isActive : true; }
     public void setActive(boolean active) { this.isActive = active; }
+    
+    // Explicit getter/setter for compilation
+    public void setRoles(List<String> roles) { this.roles = roles; }
+    public List<String> getRoles() { return roles; }
 } 

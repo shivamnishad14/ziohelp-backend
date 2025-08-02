@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { RBACContextType, Permission, MenuItem, RoleMenuPermission } from '@/types/rbac';
 import { useAuth } from './auth-context';
 import { rbacService } from '@/services/rbac.service';
+import { getNavigationForRoles } from '@/config/navigation';
 
 const RBACContext = createContext<RBACContextType | undefined>(undefined);
 
@@ -28,6 +29,13 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
   const loadUserPermissions = useCallback(async () => {
     if (!isAuthenticated || !user || !user.id) {
       console.warn('RBAC: Skipping permission load, user or user.id missing:', { isAuthenticated, user });
+      
+      // Provide fallback navigation based on user roles
+      if (user?.roles) {
+        const fallbackMenus = getNavigationForRoles(user.roles);
+        setUserMenus(fallbackMenus);
+        console.log('RBAC: Using fallback navigation for roles:', user.roles);
+      }
       return;
     }
 
@@ -50,6 +58,13 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
       console.log('RBAC: Loaded menu permissions:', menuPermissionsResponse.data);
     } catch (error) {
       console.error('RBAC: Error loading user permissions:', error);
+      
+      // Fallback to static navigation if API fails
+      if (user?.roles) {
+        const fallbackMenus = getNavigationForRoles(user.roles);
+        setUserMenus(fallbackMenus);
+        console.log('RBAC: Using fallback navigation due to error:', user.roles);
+      }
     } finally {
       setIsLoading(false);
     }

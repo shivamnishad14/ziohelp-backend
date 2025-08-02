@@ -97,7 +97,22 @@ export const faqAPI = {
 export const knowledgeBaseAPI = {
   getArticles: (params?: any) => api.get('/knowledge-base', { params }),
   getArticle: (id: number) => api.get(`/knowledge-base/${id}`),
-  createArticle: (data: any) => api.post('/knowledge-base', data),
-  updateArticle: (id: number, data: any) => api.put(`/knowledge-base/${id}`, data),
+  createArticle: (data: any) => {
+    if (data instanceof FormData) {
+      return api.post('/knowledge-base', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return api.post('/knowledge-base', data);
+  },
+  updateArticle: (id: number, data: any) => {
+    if (data instanceof FormData) {
+      return api.put(`/knowledge-base/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return api.put(`/knowledge-base/${id}`, data);
+  },
   deleteArticle: (id: number) => api.delete(`/knowledge-base/${id}`),
-}; 
+  publishArticle: (id: number) => api.put(`/knowledge-base/${id}/publish`),
+};

@@ -38,10 +38,16 @@ interface ArticleFormData {
   tags: string[];
   productId: number;
   isPublished: boolean;
+  file?: File | null;
 }
 
 const KnowledgeBase: React.FC = () => {
   const { user } = useAuth();
+  // Role helpers
+  const isAdmin = user?.roles?.includes('ADMIN');
+  const isTenantAdmin = user?.roles?.includes('TENANT_ADMIN');
+  const isDeveloper = user?.roles?.includes('DEVELOPER');
+  const canEdit = isAdmin || isTenantAdmin || isDeveloper;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -59,13 +65,13 @@ const KnowledgeBase: React.FC = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   // Queries
-  const { data: articles, isLoading } = useListArticles({
+  const { data: articles, isLoading, isError: isArticlesError, error: articlesError } = useListArticles({
     productId: selectedProduct,
     page: currentPage,
     size: pageSize
   });
 
-  const { data: searchResults } = useSearchArticles({
+  const { data: searchResults, isLoading: isSearchLoading, isError: isSearchError, error: searchError } = useSearchArticles({
     productId: selectedProduct,
     query: searchQuery,
     category: categoryFilter,
@@ -73,8 +79,8 @@ const KnowledgeBase: React.FC = () => {
     size: pageSize
   });
 
-  const { data: categories } = useArticleCategories(selectedProduct);
-  const { data: products } = useListProducts();
+  const { data: categories, isLoading: isCategoriesLoading, isError: isCategoriesError, error: categoriesError } = useArticleCategories(selectedProduct);
+  const { data: products, isLoading: isProductsLoading, isError: isProductsError, error: productsError } = useListProducts();
 
   // Mutations
   const createArticle = useCreateArticle();
@@ -89,7 +95,8 @@ const KnowledgeBase: React.FC = () => {
     category: '',
     tags: [],
     productId: selectedProduct,
-    isPublished: false
+    isPublished: false,
+    file: null
   });
 
   const [tagInput, setTagInput] = useState('');
@@ -97,7 +104,17 @@ const KnowledgeBase: React.FC = () => {
   // Handlers
   const handleCreateArticle = async () => {
     try {
-      await createArticle.mutateAsync(formData);
+      const data = new FormData();
+      data.append('title', formData.title);
+      data.append('content', formData.content);
+      data.append('category', formData.category);
+      data.append('productId', String(formData.productId));
+      data.append('isPublished', String(formData.isPublished));
+      formData.tags.forEach((tag, i) => data.append(`tags[${i}]`, tag));
+      if (formData.file) {
+        data.append('file', formData.file);
+      }
+      await createArticle.mutateAsync(data);
       toast("Article created successfully");
       setIsCreateDialogOpen(false);
       setFormData({
@@ -106,7 +123,8 @@ const KnowledgeBase: React.FC = () => {
         category: '',
         tags: [],
         productId: selectedProduct,
-        isPublished: false
+        isPublished: false,
+        file: null
       });
     } catch (error) {
       toast("Failed to create article");
@@ -116,9 +134,19 @@ const KnowledgeBase: React.FC = () => {
   const handleUpdateArticle = async () => {
     if (!selectedArticle) return;
     try {
+      const data = new FormData();
+      data.append('title', formData.title);
+      data.append('content', formData.content);
+      data.append('category', formData.category);
+      data.append('productId', String(formData.productId));
+      data.append('isPublished', String(formData.isPublished));
+      formData.tags.forEach((tag, i) => data.append(`tags[${i}]`, tag));
+      if (formData.file) {
+        data.append('file', formData.file);
+      }
       await updateArticle.mutateAsync({
         articleId: selectedArticle.id,
-        article: formData
+        article: data
       });
       toast("Article updated successfully");
       setIsEditDialogOpen(false);
@@ -162,13 +190,13 @@ const KnowledgeBase: React.FC = () => {
     });
   };
 
-  const getStatusBadgeVariant = (isPublished: boolean) => {
-    return isPublished ? 'default' : 'secondary';
-  };
+const getStatusBadgeVariant = (isPublished: boolean) => {
+  return isPublished ? 'default' : 'secondary';
+};
 
-  const displayArticles = searchQuery || categoryFilter ? searchResults : articles;
+const displayArticles = searchQuery || categoryFilter ? searchResults : articles;
 
-  return (
+return (
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -256,14 +284,22 @@ const KnowledgeBase: React.FC = () => {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
+          {isArticlesError && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load articles: {articlesError?.message || 'Unknown error'}
+              </AlertDescription>
+            </Alert>
+          )}
           <ArticlesTable 
             articles={displayArticles}
             isLoading={isLoading}
+            getStatusBadgeVariant={getStatusBadgeVariant}
             onView={(article) => {
               setSelectedArticle(article);
               setIsViewDialogOpen(true);
             }}
-            onEdit={(article) => {
+            onEdit={canEdit ? (article) => {
               setSelectedArticle(article);
               setFormData({
                 title: article.title,
@@ -274,16 +310,25 @@ const KnowledgeBase: React.FC = () => {
                 isPublished: article.isPublished
               });
               setIsEditDialogOpen(true);
-            }}
-            onPublish={handlePublishArticle}
-            onDelete={handleDeleteArticle}
+            } : undefined}
+            onPublish={canEdit ? handlePublishArticle : undefined}
+            onDelete={canEdit ? handleDeleteArticle : undefined}
+            canEdit={canEdit}
           />
         </TabsContent>
 
         <TabsContent value="published" className="space-y-4">
+          {isArticlesError && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load articles: {articlesError?.message || 'Unknown error'}
+              </AlertDescription>
+            </Alert>
+          )}
           <ArticlesTable 
             articles={displayArticles?.content?.filter((a: any) => a.isPublished)}
-            isLoading={false}
+            isLoading={isLoading}
+            getStatusBadgeVariant={getStatusBadgeVariant}
             onView={() => {}}
             onEdit={() => {}}
             onPublish={() => {}}
@@ -292,9 +337,17 @@ const KnowledgeBase: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="drafts" className="space-y-4">
+          {isArticlesError && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load articles: {articlesError?.message || 'Unknown error'}
+              </AlertDescription>
+            </Alert>
+          )}
           <ArticlesTable 
             articles={displayArticles?.content?.filter((a: any) => !a.isPublished)}
-            isLoading={false}
+            isLoading={isLoading}
+            getStatusBadgeVariant={getStatusBadgeVariant}
             onView={() => {}}
             onEdit={() => {}}
             onPublish={() => {}}
@@ -303,7 +356,18 @@ const KnowledgeBase: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="categories" className="space-y-4">
-          <CategoriesView categories={categories} />
+          {isCategoriesError && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load categories: {categoriesError?.message || 'Unknown error'}
+              </AlertDescription>
+            </Alert>
+          )}
+          {isCategoriesLoading ? (
+            <div className="p-4 text-center text-muted-foreground">Loading categories...</div>
+          ) : (
+            <CategoriesView categories={categories} />
+          )}
         </TabsContent>
       </Tabs>
 
@@ -346,24 +410,36 @@ const KnowledgeBase: React.FC = () => {
               Create a new knowledge base article.
             </DialogDescription>
           </DialogHeader>
-          <ArticleForm 
-            formData={formData}
-            setFormData={setFormData}
-            tagInput={tagInput}
-            setTagInput={setTagInput}
-            onAddTag={handleAddTag}
-            onRemoveTag={handleRemoveTag}
-            categories={categories}
-            products={products?.content}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateArticle} disabled={createArticle.isPending}>
-              {createArticle.isPending ? 'Creating...' : 'Create Article'}
-            </Button>
-          </DialogFooter>
+          {isCategoriesLoading || isProductsLoading ? (
+            <div className="p-4 text-center text-muted-foreground">Loading form data...</div>
+          ) : isCategoriesError || isProductsError ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load form data: {categoriesError?.message || productsError?.message || 'Unknown error'}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <ArticleForm 
+                formData={formData}
+                setFormData={setFormData}
+                tagInput={tagInput}
+                setTagInput={setTagInput}
+                onAddTag={handleAddTag}
+                onRemoveTag={handleRemoveTag}
+                categories={categories}
+                products={products?.content}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateArticle} disabled={createArticle.isPending}>
+                  {createArticle.isPending ? 'Creating...' : 'Create Article'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -376,24 +452,36 @@ const KnowledgeBase: React.FC = () => {
               Update the article content and metadata.
             </DialogDescription>
           </DialogHeader>
-          <ArticleForm 
-            formData={formData}
-            setFormData={setFormData}
-            tagInput={tagInput}
-            setTagInput={setTagInput}
-            onAddTag={handleAddTag}
-            onRemoveTag={handleRemoveTag}
-            categories={categories}
-            products={products?.content}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateArticle} disabled={updateArticle.isPending}>
-              {updateArticle.isPending ? 'Updating...' : 'Update Article'}
-            </Button>
-          </DialogFooter>
+          {isCategoriesLoading || isProductsLoading ? (
+            <div className="p-4 text-center text-muted-foreground">Loading form data...</div>
+          ) : isCategoriesError || isProductsError ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load form data: {categoriesError?.message || productsError?.message || 'Unknown error'}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <ArticleForm 
+                formData={formData}
+                setFormData={setFormData}
+                tagInput={tagInput}
+                setTagInput={setTagInput}
+                onAddTag={handleAddTag}
+                onRemoveTag={handleRemoveTag}
+                categories={categories}
+                products={products?.content}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateArticle} disabled={updateArticle.isPending}>
+                  {updateArticle.isPending ? 'Updating...' : 'Update Article'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -421,6 +509,26 @@ const KnowledgeBase: React.FC = () => {
                 {selectedArticle.tags.map((tag: string) => (
                   <Badge key={tag} variant="outline">{tag}</Badge>
                 ))}
+              </div>
+            )}
+            {/* Attachments */}
+            {selectedArticle?.attachments && selectedArticle.attachments.length > 0 && (
+              <div className="space-y-2">
+                <div className="font-semibold">Attachments:</div>
+                <ul className="list-disc list-inside">
+                  {selectedArticle.attachments.map((file: any) => (
+                    <li key={file.id || file.name}>
+                      <a
+                        href={file.url || file.downloadUrl || file.path || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        {file.name || file.filename || 'Download'}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
@@ -451,7 +559,7 @@ const ArticleForm: React.FC<{
           placeholder="Enter article title"
         />
       </div>
-      
+
       <div>
         <Label>Content</Label>
         <Textarea
@@ -461,7 +569,25 @@ const ArticleForm: React.FC<{
           className="min-h-[300px]"
         />
       </div>
-      
+
+      {/* File Attachment */}
+      <div>
+        <Label>Attachment</Label>
+        <Input
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={e => {
+            const file = e.target.files?.[0] || null;
+            setFormData({ ...formData, file });
+          }}
+        />
+        {formData.file && (
+          <div className="mt-2 text-sm text-muted-foreground">
+            Selected: {formData.file.name}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Category</Label>
@@ -478,7 +604,7 @@ const ArticleForm: React.FC<{
             </SelectContent>
           </Select>
         </div>
-        
+
         <div>
           <Label>Product</Label>
           <Select value={formData.productId.toString()} onValueChange={(value) => setFormData({ ...formData, productId: Number(value) })}>
@@ -495,7 +621,7 @@ const ArticleForm: React.FC<{
           </Select>
         </div>
       </div>
-      
+
       <div>
         <Label>Tags</Label>
         <div className="flex space-x-2">
@@ -519,7 +645,7 @@ const ArticleForm: React.FC<{
           </div>
         )}
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <input
           type="checkbox"
@@ -537,11 +663,13 @@ const ArticleForm: React.FC<{
 const ArticlesTable: React.FC<{
   articles?: any;
   isLoading: boolean;
+  getStatusBadgeVariant: (isPublished: boolean) => string;
   onView: (article: any) => void;
-  onEdit: (article: any) => void;
-  onPublish: (articleId: number) => void;
-  onDelete: (articleId: number) => void;
-}> = ({ articles, isLoading, onView, onEdit, onPublish, onDelete }) => {
+  onEdit?: (article: any) => void;
+  onPublish?: (articleId: number) => void;
+  onDelete?: (articleId: number) => void;
+  canEdit?: boolean;
+}> = ({ articles, isLoading, getStatusBadgeVariant, onView, onEdit, onPublish, onDelete, canEdit }) => {
   if (isLoading) {
     return (
       <Card>
@@ -561,9 +689,18 @@ const ArticlesTable: React.FC<{
     );
   }
 
-  function getStatusBadgeVariant(isPublished: any): "default" | "destructive" | "outline" | "secondary" | null | undefined {
-    throw new Error('Function not implemented.');
+  // Empty state
+  if (!articles || !articles.content || articles.content.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-muted-foreground">
+          <div>No articles found.</div>
+        </CardContent>
+      </Card>
+    );
   }
+
+  // TODO: Add error state if needed (e.g., pass error prop)
 
   return (
     <Card>
@@ -617,35 +754,39 @@ const ArticlesTable: React.FC<{
                     <Button size="sm" variant="outline" onClick={() => onView(article)}>
                       View
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => onEdit(article)}>
-                      Edit
-                    </Button>
-                    {!article.isPublished && (
+                    {canEdit && onEdit && (
+                      <Button size="sm" variant="outline" onClick={() => onEdit(article)}>
+                        Edit
+                      </Button>
+                    )}
+                    {canEdit && onPublish && !article.isPublished && (
                       <Button size="sm" variant="default" onClick={() => onPublish(article.id)}>
                         Publish
                       </Button>
                     )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="destructive">
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the article.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => onDelete(article.id)}>
+                    {canEdit && onDelete && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
                             Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the article.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(article.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
