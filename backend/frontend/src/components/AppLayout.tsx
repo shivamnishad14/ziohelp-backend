@@ -52,11 +52,133 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Use admin menu for admin, else user menu
+
   const isAdmin = user?.role === 'ADMIN' || user?.roles?.includes('ADMIN');
-  const { data: adminMenuItems, isLoading: adminMenuLoading } = useAdminMenuItems();
+
+  // Static menu for admin
+  const staticAdminMenu: ApiMenuItem[] = [
+    {
+      id: 1,
+      name: 'Dashboard',
+      icon: 'Dashboard',
+      isActive: true,
+      sortOrder: 1,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'Admin dashboard',
+      category: 'ADMIN',
+      url: '/admin/dashboard',
+    },
+    {
+      id: 2,
+      name: 'Users',
+      icon: 'Users',
+      isActive: true,
+      sortOrder: 2,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'User management',
+      category: 'ADMIN',
+      url: '/admin/users',
+    },
+    {
+      id: 3,
+      name: 'Settings',
+      icon: 'Settings',
+      isActive: true,
+      sortOrder: 3,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'System settings',
+      category: 'ADMIN',
+      url: '/admin/settings',
+    },
+    {
+      id: 4,
+      name: 'Menu Management',
+      icon: 'Menu',
+      isActive: true,
+      sortOrder: 4,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'Manage menu items',
+      category: 'ADMIN',
+      url: '/admin/menu',
+    },
+     {
+    id: 5,
+    name: 'Reports',
+    icon: 'Ticket', // Use any icon from iconMap or add new mapping
+    isActive: true,
+    sortOrder: 5,
+    parentId: null,
+    children: [],
+    roles: ['ADMIN'],
+    description: 'View system reports',
+    category: 'ADMIN',
+    url: '/admin/reports',
+  },
+   {
+    id: 6,
+    name: 'Audit Logs',
+    icon: 'Settings', // Use any icon from iconMap or add new mapping
+    isActive: true,
+    sortOrder: 6,
+    parentId: null,
+    children: [],
+    roles: ['ADMIN'],
+    description: 'System audit logs',
+    category: 'ADMIN',
+    url: '/admin/audit-logs',
+  },
+  {
+    id: 7,
+    name: 'Product',
+    icon: 'Box',
+    isActive: true,
+    sortOrder: 7,
+    parentId: null,
+    children: [],
+    roles: ['ADMIN'],
+    description: 'Manage products',
+    category: 'ADMIN',
+    url: '/admin/products',
+  },
+  {
+    id: 8,
+    name: 'FAQ',
+    icon: 'Menu',
+    isActive: true,
+    sortOrder: 8,
+    parentId: null,
+    children: [],
+    roles: ['ADMIN'],
+    description: 'Manage FAQs for products',
+    category: 'ADMIN',
+    url: '/admin/faq',
+  },
+  {
+    id: 9,
+    name: 'Article',
+    icon: 'Ticket',
+    isActive: true,
+    sortOrder: 9,
+    parentId: null,
+    children: [],
+    roles: ['ADMIN'],
+    description: 'Manage articles for products',
+    category: 'ADMIN',
+    url: '/admin/articles',
+  },
+  ];
+
   const { data: userMenuItems, isLoading: userMenuLoading } = useMenuItems();
-  const menuItems = isAdmin ? adminMenuItems : userMenuItems;
-  const menuLoading = isAdmin ? adminMenuLoading : userMenuLoading;
+  const menuItems = isAdmin ? staticAdminMenu : userMenuItems;
+  const menuLoading = isAdmin ? false : userMenuLoading;
 
   // Map backend icon string to Lucide icon component
   const iconMap: Record<string, any> = {
@@ -65,6 +187,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     Users: Users,
     Menu: MenuIcon,
     Settings: Settings,
+    Box: MenuIcon, // You can replace MenuIcon with a custom icon if you import one
     // Add more mappings as needed
   };
 
@@ -129,22 +252,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   <div className="text-xs text-muted-foreground px-2 py-1">Loading menu...</div>
                 ) : (
                   <>
-                    {isAdmin && (
-                      <SidebarMenuItem key="menu-management">
-                        <SidebarMenuButton
-                          onClick={() => handleNavigation('/admin/menu')}
-                          className={`w-full justify-start gap-3 px-3 py-2 rounded-lg transition-colors ${
-                            router.state.location.pathname === '/admin/menu'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'hover:bg-muted'
-                          } ${sidebarCollapsed ? 'justify-center px-2' : ''}`}
-                          title={sidebarCollapsed ? 'Menu Management' : undefined}
-                        >
-                          <MenuIcon className="w-4 h-4" />
-                          {!sidebarCollapsed && <span>Menu Management</span>}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )}
+                    {/* Admin menu items are now included in staticAdminMenu */}
                     {filteredMenuItems.map((item: ApiMenuItem) => {
                       const Icon = iconMap[item.icon] || MenuIcon;
                       // Support both 'url' and 'path' property for menu item

@@ -33,6 +33,10 @@ public class Ticket {
     @ManyToOne
     @JoinColumn(name = "assigned_to_id")
     private User assignedTo;
+    
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL)
     private List<Comment> comments;
@@ -82,4 +86,7 @@ public class Ticket {
     
     public Set<TicketHistory> getHistory() { return history; }
     public void setHistory(Set<TicketHistory> history) { this.history = history; }
+    
+    public Product getProduct() { return product; }
+    public void setProduct(Product product) { this.product = product; }
 } 

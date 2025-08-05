@@ -6,15 +6,22 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\config\Jwt
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\AuditLogController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Faq.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\NotificationService.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\ProductHelpController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\AuditLogRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\config\CorsConfig.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\UserController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\AIChatController.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\KnowledgeBaseArticleResponse.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\LoginRequest.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Product.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\RolePermission.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\TicketController.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\FaqService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\config\SwaggerConfig.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\KnowledgeBaseArticleRequest.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Attachment.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\PermissionRepository.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\DataInitializationService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\RegisterRequest.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\LoginResponse.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\MenuItemDto.java
@@ -48,6 +55,7 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Not
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\FileInfo.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\OrganizationController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\FaqController.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\RolePermissionRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\ApiError.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\TicketExportController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Role.java
@@ -68,6 +76,7 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\Pr
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\KnowledgeBaseArticle.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\exception\GlobalExceptionHandler.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\FaqRepository.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\PermissionController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\GuestTicketController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\ZioHelpApplication.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\KnowledgeBaseService.java
@@ -80,5 +89,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\PageRe
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\OrganizationService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\exception\ResourceNotFoundException.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\TicketHistoryRepository.java
+D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Permission.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\ProductController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\RoleMenuPermissionRepository.java

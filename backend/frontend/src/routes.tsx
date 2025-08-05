@@ -1,3 +1,13 @@
+import FaqAdmin from './features/faq/FaqAdmin';
+export const adminFaqRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: '/admin/faq',
+  component: () => (
+    <Protected allowedRoles={['ADMIN']}>
+      <FaqAdmin />
+    </Protected>
+  ),
+});
 import { RootRoute, Route, Outlet, createRoute } from '@tanstack/react-router';
 import AdminPasswordReset from './features/auth/AdminPasswordReset';
 import AdminDashboard from './features/dashboard/AdminDashboard';
@@ -5,17 +15,18 @@ import UserDashboard from './features/dashboard/UserDashboard';
 import DeveloperDashboard from './features/dashboard/DeveloperDashboard';
 import TenantDashboard from './features/dashboard/TenantDashboard';
 import UsersManagement from './features/users/UsersManagement';
-import Menu from './features/menu/Menu';
+import ImprovedMenu from './features/menu/ImprovedMenu'; 
 
 export const adminMenuRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/menu',
   component: () => (
     <Protected allowedRoles={['ADMIN']}>
-      <Menu />
+      <ImprovedMenu />
     </Protected>
   ),
 });
+
 import HelpCenter from './features/help/HelpCenter';
 import CommentsPage from './features/developer/CommentsPage';
 import NotFound from './components/NotFound';
@@ -70,6 +81,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 const rootRoute = new RootRoute({
   component: () => <Outlet />,
+  notFoundComponent: NotFound,
 });
 
 export const loginRoute = new Route({
@@ -191,12 +203,17 @@ export const adminAnalyticsRoute = new Route({
   ),
 });
 
+// TODO: Replace with real RoleManagement page when implemented
 export const adminRolesRoute = new Route({
   getParentRoute: () => rootRoute,
   path: '/admin/roles',
   component: () => (
     <Protected allowedRoles={['ADMIN']}>
-      <div>Admin Roles & Permissions - Coming Soon</div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <h1 className="text-3xl font-bold mb-2">Roles & Permissions</h1>
+        <p className="text-lg text-muted-foreground mb-4">Role management is coming soon.</p>
+        <p className="text-sm text-gray-400">(No implementation yet. Please check back later.)</p>
+      </div>
     </Protected>
   ),
 });
@@ -231,12 +248,14 @@ export const adminEmailTemplatesRoute = new Route({
   ),
 });
 
+import ProductAdmin from './features/product/ProductAdmin';
+
 export const adminProductsRoute = new Route({
   getParentRoute: () => rootRoute,
   path: '/admin/products',
   component: () => (
     <Protected allowedRoles={['ADMIN']}>
-      <div>Admin Products/Tenants - Coming Soon</div>
+      <ProductAdmin />
     </Protected>
   ),
 });
@@ -472,15 +491,7 @@ export const usersRoute = new Route({
   },
 });
 
-export const menuRoute = new Route({
-  getParentRoute: () => rootRoute,
-  path: '/menu',
-  component: () => (
-    <Protected>
-      <Menu />
-    </Protected>
-  ),
-});
+
 
 // 404 route
 export const notFoundRoute = new Route({
@@ -509,7 +520,8 @@ export const routeTree = rootRoute.addChildren([
   adminApiLogsRoute,
   adminAuditLogsRoute,
   adminExportRoute,
-  // adminMenuRoute, // <-- Removed duplicate
+  adminMenuRoute, // Only admin menu route needed
+  adminFaqRoute,
   // User routes
   userDashboardRoute,
   userTicketsRoute,
@@ -530,7 +542,6 @@ export const routeTree = rootRoute.addChildren([
   dashboardRoute,
   ticketsRoute,
   usersRoute,
-  menuRoute,
   // 404
   notFoundRoute,
 ]);

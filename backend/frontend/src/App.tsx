@@ -10,10 +10,13 @@ import { AuthProvider } from './features/auth/AuthProvider';
 // import Dashboard from './features/dashboard/Dashboard';
 import Tickets from './features/tickets/Tickets';
 import Users from './features/users/Users';
-import Menu from './features/menu/Menu';
+import Menu from './features/menu/ImprovedMenu';
 import Login from './features/auth/Login';
 import AppLayout from './components/layout/AppLayout';
 import TailwindTest from './components/TailwindTest';
+import ProductHelpCenter from './features/help/ProductHelpCenter';
+import PublicHelpCenter from './features/help/PublicHelpCenter';
+import Dashboard from './features/dashboard/Dashboard';
 import { useAuth } from './features/auth/AuthProvider';
 import { useRouter } from '@tanstack/react-router';
 
@@ -63,25 +66,25 @@ function Protected({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// const dashboardRoute = new Route({
-//   getParentRoute: () => rootRoute,
-//   path: '/',
-//   component: () => (
-//     <Protected>
-//       <Dashboard />
-//     </Protected>
-//   ),
-// });
+const dashboardRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: () => (
+    <Protected>
+      <Dashboard />
+    </Protected>
+  ),
+});
 
-// const dashboardExplicitRoute = new Route({
-//   getParentRoute: () => rootRoute,
-//   path: '/dashboard',
-//   component: () => (
-//     <Protected>
-//       <Dashboard />
-//     </Protected>
-//   ),
-// });
+const dashboardExplicitRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+  component: () => (
+    <Protected>
+      <Dashboard />
+    </Protected>
+  ),
+});
 
 const ticketsRoute = new Route({
   getParentRoute: () => rootRoute,
@@ -113,14 +116,35 @@ const menuRoute = new Route({
   ),
 });
 
+const helpRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: '/help',
+  component: () => (
+    <Protected>
+      <ProductHelpCenter />
+    </Protected>
+  ),
+});
+
+const publicHelpRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: '/public-help/$domain',
+  component: () => {
+    const { domain } = publicHelpRoute.useParams();
+    return <PublicHelpCenter domain={domain} />;
+  },
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   testRoute,
-  // dashboardRoute,
-  // dashboardExplicitRoute,
+  dashboardRoute,
+  dashboardExplicitRoute,
   ticketsRoute,
   usersRoute,
   menuRoute,
+  helpRoute,
+  publicHelpRoute,
 ]);
 
 const router = createRouter({ routeTree });

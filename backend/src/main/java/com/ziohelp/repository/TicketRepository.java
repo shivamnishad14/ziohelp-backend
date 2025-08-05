@@ -50,4 +50,52 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.organization.id = :organizationId AND t.status = :status AND t.createdAt BETWEEN :start AND :end")
     long countByOrganizationIdAndStatusAndCreatedAtBetween(@Param("organizationId") Long organizationId, @Param("status") String status, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    
+    // ==== PRODUCT-BASED QUERIES ====
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId")
+    List<Ticket> findByProduct_Id(@Param("productId") Long productId);
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId AND t.status = :status")
+    List<Ticket> findByProduct_IdAndStatus(@Param("productId") Long productId, @Param("status") String status);
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId AND t.priority = :priority")
+    List<Ticket> findByProduct_IdAndPriority(@Param("productId") Long productId, @Param("priority") String priority);
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId AND t.category = :category")
+    List<Ticket> findByProduct_IdAndCategory(@Param("productId") Long productId, @Param("category") String category);
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId AND t.createdBy = :createdBy")
+    Page<Ticket> findByProduct_IdAndCreatedBy(@Param("productId") Long productId, @Param("createdBy") String createdBy, Pageable pageable);
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId")
+    Page<Ticket> findByProduct_Id(@Param("productId") Long productId, Pageable pageable);
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId AND " +
+           "(LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Ticket> searchByProduct_IdAndKeyword(@Param("productId") Long productId,
+                                           @Param("keyword") String keyword,
+                                           Pageable pageable);
+    
+    // Count methods for product statistics
+    long countByProduct_IdAndStatus(Long productId, String status);
+    
+    @Query("SELECT DISTINCT t.status FROM Ticket t WHERE t.product.id = :productId")
+    List<String> findDistinctStatusesByProduct_Id(@Param("productId") Long productId);
+    
+    @Query("SELECT DISTINCT t.category FROM Ticket t WHERE t.product.id = :productId AND t.category IS NOT NULL")
+    List<String> findDistinctCategoriesByProduct_Id(@Param("productId") Long productId);
+    
+    @Query("SELECT t FROM Ticket t WHERE t.product.id = :productId " +
+           "AND (:status IS NULL OR t.status = :status) " +
+           "AND (:search IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(t.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Ticket> findProductTicketsWithFiltersByProduct_Id(@Param("productId") Long productId,
+                                              @Param("status") String status,
+                                              @Param("search") String search,
+                                              Pageable pageable);
+    
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'DEVELOPER' AND u.organization.id = :orgId")
+    List<User> findDevelopersByOrganizationId(@Param("orgId") Long orgId);
 } 

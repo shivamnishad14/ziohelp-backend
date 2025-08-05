@@ -1,0 +1,12 @@
+[
+  { "name": "Dashboard", "path": "/admin/dashboard", "category": "Admin" },
+  { "name": "Users", "path": "/admin/users", "category": "Admin" },
+  { "name": "Menu Management", "path": "/admin/menu", "category": "Admin" },
+  { "name": "Tickets", "path": "/admin/tickets", "category": "Admin" },
+  { "name": "Settings", "path": "/admin/settings", "category": "Admin" },
+  { "name": "Admin Analytics", "path": "/admin/analytics", "category": "Admin" },
+  { "name": "Profile", "path": "/profile", "category": "User" },
+  { "name": "My Tickets", "path": "/user/tickets", "category": "User" },
+  { "name": "Raise Ticket", "path": "/user/raise-ticket", "category": "User" },
+  { "name": "Help Center", "path": "/help-center", "category": "User" }
+]

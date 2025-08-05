@@ -1,4 +1,9 @@
 package com.ziohelp.controller;
+import org.springframework.validation.annotation.Validated;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.util.stream.Collectors;
 
 import com.ziohelp.entity.Faq;
 import com.ziohelp.entity.Organization;
@@ -46,7 +51,8 @@ public class FaqController {
     ) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Faq> faqPage = faqRepository.findAllPaged(search.isEmpty() ? null : search, pageable);
+        String searchParam = (search == null || search.trim().isEmpty()) ? null : search.trim();
+        Page<Faq> faqPage = faqRepository.findAllPaged(searchParam, pageable);
         PageResponse<Faq> response = new PageResponse<>(
             faqPage.getContent(),
             faqPage.getNumber(),
@@ -134,5 +140,71 @@ public class FaqController {
     @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
     public ResponseEntity<List<String>> getCategories() {
         return ResponseEntity.ok(faqRepository.findDistinctCategories());
+    }
+    
+    // ==== PRODUCT-BASED FAQ OPERATIONS ====
+    
+    @GetMapping("/product/{productId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
+    @Operation(summary = "Get FAQs by product")
+    public ResponseEntity<PageResponse<Faq>> getFaqsByProduct(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Faq> faqPage = faqRepository.findByProduct_IdPaged(productId, search.isEmpty() ? null : search, pageable);
+        PageResponse<Faq> response = new PageResponse<>(
+            faqPage.getContent(),
+            faqPage.getNumber(),
+            faqPage.getSize(),
+            faqPage.getTotalElements(),
+            faqPage.getTotalPages(),
+            faqPage.isLast()
+        );
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/product/{productId}/category/{category}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
+    @Operation(summary = "Get FAQs by product and category")
+    public ResponseEntity<List<Faq>> getFaqsByProductAndCategory(
+            @PathVariable Long productId,
+            @PathVariable String category) {
+        return ResponseEntity.ok(faqRepository.findByProduct_IdAndCategory(productId, category));
+    }
+    
+    @GetMapping("/product/{productId}/categories")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN', 'USER', 'DEVELOPER')")
+    @Operation(summary = "Get all categories for a specific product")
+    public ResponseEntity<List<String>> getCategoriesByProduct(@PathVariable Long productId) {
+        return ResponseEntity.ok(faqRepository.findDistinctCategoriesByProduct_Id(productId));
+    }
+    
+    @PostMapping("/product/{productId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT_ADMIN')")
+    @Operation(summary = "Create FAQ for specific product")
+    public ResponseEntity<Faq> createFaqForProduct(@PathVariable Long productId, @RequestBody Faq faq) {
+        // Set the product - this assumes Product entity exists
+        faq.setProduct(com.ziohelp.entity.Product.builder().id(productId).build());
+        return ResponseEntity.ok(faqRepository.save(faq));
+    }
+    
+    @GetMapping("/public/product/{domain}")
+    @Operation(summary = "Get public FAQs by product domain")
+    public ResponseEntity<PageResponse<Faq>> getPublicFaqsByProductDomain(
+            @PathVariable String domain,
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // This would require service implementation to find product by domain
+        // For now, returning empty response
+        PageResponse<Faq> response = new PageResponse<>(
+            List.of(), page, size, 0L, 0, true
+        );
+        return ResponseEntity.ok(response);
     }
 } 
