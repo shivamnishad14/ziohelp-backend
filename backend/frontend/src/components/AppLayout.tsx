@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { useMenuItems, useAdminMenuItems } from '@/hooks/useMenuItems';
-import type { MenuItem as ApiMenuItem } from '@/hooks/useMenuItems';
+import React from 'react';
+import { useMenuItems } from '@/hooks/useMenuItems';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useRouter } from '@tanstack/react-router';
 import { Button } from './ui/button';
@@ -40,6 +39,8 @@ import {
   Bell,
   Search
 } from 'lucide-react';
+import { Toaster } from './ui/toaster';
+import { User, MenuItem } from '@/types';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -48,169 +49,131 @@ interface AppLayoutProps {
 const AppLayout = ({ children }: AppLayoutProps) => {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [notifications] = useState(3); // Example notification count
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [notifications] = React.useState(3); // Example notification count
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const { menuItems, isLoading: menuIsLoading } = useMenuItems();
 
-  // Use admin menu for admin, else user menu
+  const isAdmin = user?.role === 'ADMIN';
 
-  const isAdmin = user?.role === 'ADMIN' || user?.roles?.includes('ADMIN');
-
-  // Static menu for admin
-  const staticAdminMenu: ApiMenuItem[] = [
+  const adminMenuItems: MenuItem[] = [
     {
       id: 1,
       name: 'Dashboard',
-      icon: 'Dashboard',
+      path: '/admin/dashboard',
+      icon: 'LayoutDashboard',
       isActive: true,
       sortOrder: 1,
       parentId: null,
       children: [],
       roles: ['ADMIN'],
-      description: 'Admin dashboard',
+      description: 'Overview of system metrics',
       category: 'ADMIN',
-      url: '/admin/dashboard',
     },
     {
       id: 2,
-      name: 'Users',
+      name: 'User Management',
+      path: '/admin/users',
       icon: 'Users',
       isActive: true,
       sortOrder: 2,
       parentId: null,
       children: [],
       roles: ['ADMIN'],
-      description: 'User management',
+      description: 'Manage users and roles',
       category: 'ADMIN',
-      url: '/admin/users',
     },
     {
       id: 3,
-      name: 'Settings',
+      name: 'System Settings',
+      path: '/admin/settings',
       icon: 'Settings',
       isActive: true,
-      sortOrder: 3,
+      sortOrder: 10,
       parentId: null,
       children: [],
       roles: ['ADMIN'],
-      description: 'System settings',
+      description: 'Configure system parameters',
       category: 'ADMIN',
-      url: '/admin/settings',
     },
     {
       id: 4,
       name: 'Menu Management',
-      icon: 'Menu',
+      path: '/admin/menu',
+      icon: 'MenuSquare',
       isActive: true,
-      sortOrder: 4,
+      sortOrder: 11,
       parentId: null,
       children: [],
       roles: ['ADMIN'],
-      description: 'Manage menu items',
+      description: 'Manage navigation menus',
       category: 'ADMIN',
-      url: '/admin/menu',
     },
-     {
-    id: 5,
-    name: 'Reports',
-    icon: 'Ticket', // Use any icon from iconMap or add new mapping
-    isActive: true,
-    sortOrder: 5,
-    parentId: null,
-    children: [],
-    roles: ['ADMIN'],
-    description: 'View system reports',
-    category: 'ADMIN',
-    url: '/admin/reports',
-  },
-   {
-    id: 6,
-    name: 'Audit Logs',
-    icon: 'Settings', // Use any icon from iconMap or add new mapping
-    isActive: true,
-    sortOrder: 6,
-    parentId: null,
-    children: [],
-    roles: ['ADMIN'],
-    description: 'System audit logs',
-    category: 'ADMIN',
-    url: '/admin/audit-logs',
-  },
-  {
-    id: 7,
-    name: 'Product',
-    icon: 'Box',
-    isActive: true,
-    sortOrder: 7,
-    parentId: null,
-    children: [],
-    roles: ['ADMIN'],
-    description: 'Manage products',
-    category: 'ADMIN',
-    url: '/admin/products',
-  },
-  {
-    id: 8,
-    name: 'FAQ',
-    icon: 'Menu',
-    isActive: true,
-    sortOrder: 8,
-    parentId: null,
-    children: [],
-    roles: ['ADMIN'],
-    description: 'Manage FAQs for products',
-    category: 'ADMIN',
-    url: '/admin/faq',
-  },
-  {
-    id: 9,
-    name: 'Article',
-    icon: 'Ticket',
-    isActive: true,
-    sortOrder: 9,
-    parentId: null,
-    children: [],
-    roles: ['ADMIN'],
-    description: 'Manage articles for products',
-    category: 'ADMIN',
-    url: '/admin/articles',
-  },
+    {
+      id: 5,
+      name: 'Reports',
+      path: '/admin/reports',
+      icon: 'LineChart',
+      isActive: true,
+      sortOrder: 20,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'View system reports',
+      category: 'ADMIN',
+    },
+    {
+      id: 6,
+      name: 'Audit Logs',
+      path: '/admin/audit-logs',
+      icon: 'History',
+      isActive: true,
+      sortOrder: 21,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'View audit logs',
+      category: 'ADMIN',
+    },
+    {
+      id: 7,
+      name: 'Products',
+      path: '/admin/products',
+      icon: 'Box',
+      isActive: true,
+      sortOrder: 30,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'Manage products',
+      category: 'ADMIN',
+    },
+    {
+      id: 8,
+      name: 'FAQ Management',
+      path: '/admin/faq',
+      icon: 'HelpCircle',
+      isActive: true,
+      sortOrder: 31,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'Manage FAQs',
+      category: 'ADMIN',
+    },
+    {
+      id: 9,
+      name: 'Article Management',
+      path: '/admin/articles',
+      icon: 'FileText',
+      isActive: true,
+      sortOrder: 32,
+      parentId: null,
+      children: [],
+      roles: ['ADMIN'],
+      description: 'Manage knowledge base articles',
+      category: 'ADMIN',
+    },
   ];
-
-  const { data: userMenuItems, isLoading: userMenuLoading } = useMenuItems();
-  const menuItems = isAdmin ? staticAdminMenu : userMenuItems;
-  const menuLoading = isAdmin ? false : userMenuLoading;
-
-  // Map backend icon string to Lucide icon component
-  const iconMap: Record<string, any> = {
-    Dashboard: LayoutDashboard,
-    Ticket: Ticket,
-    Users: Users,
-    Menu: MenuIcon,
-    Settings: Settings,
-    Box: MenuIcon, // You can replace MenuIcon with a custom icon if you import one
-    // Add more mappings as needed
-  };
-
-  // Filter menu items by user role (if backend provides roles)
-  const filteredMenuItems = (menuItems || []).filter(item => {
-    if (isAdmin) return true;
-    return user?.role && (!item.roles || item.roles.includes(user.role));
-  });
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return 'destructive';
-      case 'TENANT_ADMIN':
-        return 'default';
-      case 'DEVELOPER':
-        return 'secondary';
-      case 'USER':
-        return 'outline';
-      default:
-        return 'outline';
-    }
-  };
 
   const handleNavigation = (path: string) => {
     router.navigate({ to: path });
@@ -225,12 +188,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       .slice(0, 2);
   };
 
+  const displayedMenuItems = isAdmin ? adminMenuItems : menuItems;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         {/* Sidebar */}
         <Sidebar
-          className={`sticky top-0 h-screen border-r bg-white shadow-sm flex flex-col justify-between transition-all duration-200 z-30 ${sidebarCollapsed ? 'w-16 min-w-16' : 'w-64 min-w-64'}`}
+          className={`sticky top-0 h-screen border-r bg-white shadow-sm flex flex-col justify-between transition-all duration-200 z-30 ${isCollapsed ? 'w-16 min-w-16' : 'w-64 min-w-64'}`}
         >
           <div>
             <SidebarHeader className="border-b p-4 flex items-center">
@@ -238,7 +203,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                   <Shield className="w-4 h-4 text-white" />
                 </div>
-                {!sidebarCollapsed && (
+                {!isCollapsed && (
                   <div className="flex flex-col">
                     <span className="font-semibold text-sm">ZioHelp</span>
                     <span className="text-xs text-muted-foreground">Support System</span>
@@ -248,12 +213,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             </SidebarHeader>
             <SidebarContent className="p-4">
               <SidebarMenu>
-                {menuLoading ? (
+                {menuIsLoading ? (
                   <div className="text-xs text-muted-foreground px-2 py-1">Loading menu...</div>
                 ) : (
                   <>
                     {/* Admin menu items are now included in staticAdminMenu */}
-                    {filteredMenuItems.map((item: ApiMenuItem) => {
+                    {displayedMenuItems.map((item: ApiMenuItem) => {
                       const Icon = iconMap[item.icon] || MenuIcon;
                       // Support both 'url' and 'path' property for menu item
                       const menuUrl = item.url || item.path;
@@ -270,11 +235,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                               isActive 
                                 ? 'bg-primary text-primary-foreground' 
                                 : 'hover:bg-muted'
-                            } ${sidebarCollapsed ? 'justify-center px-2' : ''}`}
-                            title={sidebarCollapsed ? item.name : undefined}
+                            } ${isCollapsed ? 'justify-center px-2' : ''}`}
+                            title={isCollapsed ? item.name : undefined}
                           >
                             <Icon className="w-4 h-4" />
-                            {!sidebarCollapsed && <span>{item.name}</span>}
+                            {!isCollapsed && <span>{item.name}</span>}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -284,10 +249,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               </SidebarMenu>
             </SidebarContent>
           </div>
-          <SidebarFooter className={`border-t p-4 bg-gray-50 flex flex-col gap-2 ${sidebarCollapsed ? 'items-center' : ''}`}>
+          <SidebarFooter className={`border-t p-4 bg-gray-50 flex flex-col gap-2 ${isCollapsed ? 'items-center' : ''}`}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className={`w-full justify-between h-auto p-2 ${sidebarCollapsed ? 'flex-col items-center gap-1' : ''}`}>
+                <Button variant="ghost" className={`w-full justify-between h-auto p-2 ${isCollapsed ? 'flex-col items-center gap-1' : ''}`}>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="" />
@@ -295,7 +260,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         {user?.fullName ? getUserInitials(user.fullName) : 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    {!sidebarCollapsed && (
+                    {!isCollapsed && (
                       <div className="flex flex-col items-start text-sm">
                         <span className="font-medium truncate max-w-[120px]">
                           {user?.fullName || 'User'}
@@ -339,10 +304,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <button
               type="button"
               className="mt-2 md:inline-flex items-center justify-center w-8 h-8 rounded hover:bg-muted transition"
-              onClick={() => setSidebarCollapsed((v) => !v)}
-              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              onClick={() => setIsCollapsed((v) => !v)}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+              {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
             </button>
           </SidebarFooter>
         </Sidebar>
