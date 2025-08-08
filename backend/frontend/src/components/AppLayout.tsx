@@ -1,3 +1,5 @@
+import { iconMap } from './iconMap';
+import { getRoleBadgeVariant } from './getRoleBadgeVariant';
 import React from 'react';
 import { useMenuItems } from '@/hooks/useMenuItems';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -26,8 +28,6 @@ import {
   SidebarTrigger 
 } from './ui/sidebar';
 import { 
-  LayoutDashboard, 
-  Ticket, 
   Users, 
   Menu as MenuIcon, 
   Settings, 
@@ -39,8 +39,8 @@ import {
   Bell,
   Search
 } from 'lucide-react';
-import { Toaster } from './ui/toaster';
-import { User, MenuItem } from '@/types';
+// import { Toaster } from './ui/toaster'; // Unused
+import type { MenuItem } from '../types';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -51,7 +51,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const router = useRouter();
   const [notifications] = React.useState(3); // Example notification count
   const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const { menuItems, isLoading: menuIsLoading } = useMenuItems();
+  const { data: menuItems, isLoading: menuIsLoading } = useMenuItems();
 
   const isAdmin = user?.role === 'ADMIN';
 
@@ -188,7 +188,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       .slice(0, 2);
   };
 
-  const displayedMenuItems = isAdmin ? adminMenuItems : menuItems;
+  const displayedMenuItems = (isAdmin ? adminMenuItems : menuItems) || [];
 
   return (
     <SidebarProvider>
@@ -218,28 +218,28 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 ) : (
                   <>
                     {/* Admin menu items are now included in staticAdminMenu */}
-                    {displayedMenuItems.map((item: ApiMenuItem) => {
-                      const Icon = iconMap[item.icon] || MenuIcon;
-                      // Support both 'url' and 'path' property for menu item
-                      const menuUrl = item.url || item.path;
+                    {displayedMenuItems.map((item) => {
+                      const safeItem = { ...item, children: item.children ?? [] } as MenuItem;
+                      const Icon = iconMap[safeItem.icon] || MenuIcon;
+                      const menuUrl = safeItem.path;
                       const isActive = router.state.location.pathname === menuUrl;
                       return (
-                        <SidebarMenuItem key={item.id}>
+                        <SidebarMenuItem key={safeItem.id}>
                           <SidebarMenuButton
                             onClick={() => {
-                              console.log('Menu click:', item);
+                              console.log('Menu click:', safeItem);
                               if (menuUrl) handleNavigation(menuUrl);
-                              else console.warn('No url/path for menu item', item);
+                              else console.warn('No url/path for menu item', safeItem);
                             }}
                             className={`w-full justify-start gap-3 px-3 py-2 rounded-lg transition-colors ${
                               isActive 
                                 ? 'bg-primary text-primary-foreground' 
                                 : 'hover:bg-muted'
                             } ${isCollapsed ? 'justify-center px-2' : ''}`}
-                            title={isCollapsed ? item.name : undefined}
+                            title={isCollapsed ? safeItem.name : undefined}
                           >
                             <Icon className="w-4 h-4" />
-                            {!isCollapsed && <span>{item.name}</span>}
+                            {!isCollapsed && <span>{safeItem.name}</span>}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -266,7 +266,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                           {user?.fullName || 'User'}
                         </span>
                         <Badge 
-                          variant={getRoleBadgeVariant(user?.role || 'USER')}
+                          variant={getRoleBadgeVariant(user?.role || 'USER') as 'default' | 'destructive' | 'outline' | 'secondary'}
                           className="text-xs h-4"
                         >
                           {user?.role || 'USER'}

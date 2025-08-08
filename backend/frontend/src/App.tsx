@@ -12,7 +12,7 @@ import Tickets from './features/tickets/Tickets';
 import Users from './features/users/Users';
 import Menu from './features/menu/ImprovedMenu';
 import Login from './features/auth/Login';
-import { AppLayout } from './components/AppLayout';
+import AppLayout from './components/AppLayout';
 import TailwindTest from './components/TailwindTest';
 import ProductHelpCenter from './features/help/ProductHelpCenter';
 import PublicHelpCenter from './features/help/PublicHelpCenter';

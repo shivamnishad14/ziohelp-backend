@@ -30,9 +30,7 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\Organi
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\DashboardService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\GeminiService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\NotificationController.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\PasswordGenerator.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\AuditLog.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\HashVerifier.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\FileInfoRepository.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Ticket.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\config\WebSocketConfig.java
@@ -45,7 +43,6 @@ D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\security\A
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\security\JwtAuthFilter.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\UserService.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\service\PdfExportService.java
-D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\controller\HashController.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\dto\UserDto.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\entity\Comment.java
 D:\project\help zio\ziohelp-backend\backend\src\main\java\com\ziohelp\repository\TicketRepository.java
